@@ -13,8 +13,8 @@ heritable_pcs <- grep("PC", heritable_traits, value=T)
 diet_phenos <- read_tsv("/humgen/diabetes2/users/jcole/UKBB/diet/BOLT_UKB_diet_genoQCEUR450K_170FFQphenotypes_agesexadj_INV") %>%
   select(id=IID, one_of(heritable_pcs))
 
-confounders <- read_tsv("/humgen/diabetes2/users/jcole/UKBB/pheno/UKBiobank_genoQC_reportedANDgeneticEUR_N455146_FLOREZ_EUR_PCA_covariates.txt") %>%
-  select(id=FLOREZ_IID, contains("PC"), cov_GENO_ARRAY)
+confounders <- read_tsv("/humgen/diabetes2/users/jcole/UKBB/pheno/UKBiobank_genoQC_reportedANDgeneticEUR_N455146_FLOREZ_EUR_PCA_covariates_40dim.txt") %>%
+  select(id=Florez_IID, contains("PC"), cov_GENO_ARRAY=genotyping.array)
 
 unrelateds <- read_tsv("/humgen/diabetes2/users/jcole/UKBB/pheno/UKBiobank_genoQC_reportedANDgeneticEUR_unrelatedsoly_N378142_FID_IID_noheader.txt", 
                        col_names=c("FID", "IID")) %>%
@@ -25,13 +25,16 @@ withdrawn_consent <- scan("/humgen/diabetes/UKBB_app27892/w27892_20181016.csv", 
 admin <- read_tsv("/humgen/diabetes2/users/jcole/UKBB/pheno/UKBiobank_assessment_center_f.54_birthplace_f.1647.txt") %>%
   select(id=Florez_FID, assessment_centre=f.54.0.0_categorical, birthplace=f.1647.0.0_categorical)
 
-phenos <- read_tsv("/humgen/diabetes/users/jcole/UKBB/pheno/round2_T2D_updateMay2019/UKBiobank_genoQC_reportedANDgeneticEUR_N455146_raw_and_diabetesphenotypes_complete_updateAug2019.txt") %>%
+phenos1 <- read_tsv("/humgen/diabetes/users/jcole/UKBB/pheno/round2_T2D_updateMay2019/UKBiobank_genoQC_reportedANDgeneticEUR_N455146_raw_and_diabetesphenotypes_complete_updateAug2019.txt") %>%
   select(id=FLOREZ_IID,
          t2d_strict=prob_poss_t2dm_all_plus_t2d_controls_strict_hba1c,
          t2d_loose=prob_poss_t2dm_all_plus_t2d_controls_loose_hba1c,
-         hba1c=hba1c.30750.NGSP.max,
+         hba1c_max=hba1c.30750.NGSP.max,
          age=age_months_average,
          sex=f.31.0.0)
+phenos2 <- read_tsv("/humgen/diabetes/UKBB_app27892/ukb28679.tab.gz") %>%
+  select(id=f.eid, hba1c_1=f.30750.0.0, hba1c_2=f.30750.1.0)
+phenos <- full_join(phenos1, phenos2, by="id")
 
 # Merge all phenotypes and covariates
 gwis_phenos <- samplefile %>%
@@ -39,7 +42,7 @@ gwis_phenos <- samplefile %>%
   left_join(confounders) %>%
   left_join(admin) %>%
   left_join(phenos)
-gwis_outcomes <- c("hba1c", "t2d_strict", "t2d_loose")  # GWIS outcomes
+gwis_outcomes <- c("hba1c_1", "hba1c_2", "hba1c_max", "t2d_strict", "t2d_loose")  # GWIS outcomes
 gwis_phenos <- gwis_phenos %>%  # Set phenotypes to missing if related or withdrew consent
   mutate_at(gwis_outcomes, function(x) {
     ifelse(!(gwis_phenos$id %in% unrelateds$id) | 
@@ -57,10 +60,13 @@ gwis_model_phenos <- model.matrix(
   select(-1) %>%
   setNames(make.names(names(.)))
 
-# Inverse-normal transformation of continuous outcome
+# HbA1c-specific processing
 INT <- function(x) qnorm((rank(x, na.last="keep") - 0.5) / sum(!is.na(x)))
 gwis_model_phenos <- gwis_model_phenos %>%
-  mutate(hba1c=INT(hba1c))
+  mutate_at(vars(contains("hba1c")), function(x) ifelse(.$t2d_loose | is.na(.$t2d_loose), NA, x)) %>%
+  mutate(hba1c_raw=hba1c_1,
+	 hba1c_INT=INT(hba1c_raw),
+	 hba1c_log=log(hba1c_raw))
 
 write_csv(gwis_model_phenos, "../data/processed/ukbb_diet_gwis_phenos.csv")
 write_csv(slice(gwis_model_phenos, 1:1000), "../data/processed/ukbb_diet_gwis_phenos_1k.csv")

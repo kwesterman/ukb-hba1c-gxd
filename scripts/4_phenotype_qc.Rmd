@@ -1,0 +1,104 @@
+---
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+title: "Phenotype QC for UKB gene-diet interaction analysis"
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo=F, message=F,warning=F, fig.path="../results/figures/")
+suppressMessages(silent <- lapply(
+  c("knitr", "kableExtra", "tidyverse", "cowplot", "jtools"), 
+  library, character.only=T))
+```
+
+```{r auxiliary}
+INT <- function(x) qnorm((rank(x, na.last="keep") - 0.5) / sum(!is.na(x)))
+```
+
+
+```{r read-phenos}
+raw_phenos <- read_csv("../data/processed/ukbb_diet_gwis_phenos_raw.csv")
+phenos <- read_csv("../data/processed/ukbb_diet_gwis_phenos.csv")
+```
+
+```{r additional-variables, eval=F}
+acbpAdj_lm <- lm(hba1c ~ assessment_centre + birthplace, data=raw_phenos,
+                 na.action=na.exclude)
+phenos_expanded <- phenos %>%
+  mutate(ffq_median_PC1_INT=INT(ffq_median_PC1),
+         hba1c_acbpResid_INT=INT(resid(acbpAdj_lm)))
+write_csv(phenos_expanded, "../data/processed/ukbb_diet_gwis_phenos_expanded.csv")
+```
+
+All data shown below are from unrelated, European-ancestry individuals in UK Biobank who have not revoked consent for analysis (N ~ 350k).
+
+```{r distributions}
+hba1c_hist <- ggplot(raw_phenos, aes(x=hba1c)) + 
+  geom_histogram() +
+  labs(title="HbA1c raw")
+hba1c_INT_hist <- ggplot(phenos, aes(x=hba1c)) +
+  geom_histogram() +
+  labs(title="HbA1c (INT)")
+plot_grid(hba1c_hist, hba1c_INT_hist)
+
+ggplot(phenos, aes(x=ffq_median_PC1)) + 
+  geom_histogram() +
+  labs(title="First FFQ PC")
+
+ffq_pc_plts <- lapply(1:4, function(i) {
+  ggplot(phenos, aes_string(x=paste0("ffq_median_PC", i))) +
+    geom_histogram() +
+    labs(title=paste0("FFQ PC", i), x="")
+})
+do.call(plot_grid, ffq_pc_plts)
+
+ggplot(raw_phenos, aes(x=sex)) +
+  geom_bar()
+
+ggplot(phenos, aes(x=age)) +
+  geom_histogram()
+
+ggplot(raw_phenos, aes(x=fct_rev(assessment_centre))) +
+  geom_bar() +
+  coord_flip() +
+  labs(x="Assessment Centre")
+
+ggplot(raw_phenos, aes(x=fct_rev(birthplace))) +
+  geom_bar() +
+  coord_flip() +
+  labs(x="Birthplace")
+```
+
+## Are potential confounders (birthplace, assessment center) associated with HbA1c?
+
+```{r hba1c-associations}
+hba1c_ac_lm <- lm(hba1c ~ assessment_centre, data=raw_phenos)
+hba1cINT_ac_lm <- lm(INT(hba1c) ~ assessment_centre, data=raw_phenos)
+plot_summs(hba1c_ac_lm, hba1cINT_ac_lm,
+           model.names=c("Raw", "INT"))
+
+hba1c_bp_lm <- lm(hba1c ~ birthplace, data=raw_phenos)
+hba1cINT_bp_lm <- lm(INT(hba1c) ~ birthplace, data=raw_phenos)
+plot_summs(hba1c_bp_lm, hba1cINT_bp_lm,
+           model.names=c("Raw", "INT"))
+
+pc_string <- paste0("PC", 1:10, collapse=" + ")
+hba1c_pcs_lm <- lm(as.formula(paste0("hba1c ~ ", pc_string)), data=raw_phenos)
+hba1cINT_pcs_lm <- lm(as.formula(paste0("INT(hba1c) ~ ", pc_string)), data=raw_phenos)
+plot_summs(hba1c_pcs_lm, hba1cINT_pcs_lm,
+           model.names=c("Raw", "INT"))
+
+mydf <- raw_phenos %>% select(hba1c, sex, age) %>% mutate(age_squared=age**2)
+hba1c_basic_lm <- lm(hba1c ~ age + sex + age_squared, data=mydf)
+hba1cINT_basic_lm <- lm(INT(hba1c) ~ age + sex + age_squared, data=mydf)
+plot_summs(hba1c_basic_lm, hba1cINT_basic_lm,
+           model.names=c("Raw", "INT"))
+
+all_covar_string <- paste0(pc_string, " + assessment_centre + birthplace")
+hba1c_all_lm <- lm(as.formula(paste0("hba1c ~ ", all_covar_string)), data=raw_phenos)
+hba1cINT_all_lm <- lm(as.formula(paste0("INT(hba1c) ~ ", all_covar_string)), data=raw_phenos)
+plot_summs(hba1c_all_lm, hba1cINT_all_lm,
+           model.names=c("Raw", "INT"))
+```
+

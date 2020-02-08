@@ -1,0 +1,349 @@
+---
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+title: "Initial results from UKB gene-diet interaction analysis"
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo=F, message=F, warning=F, fig.path="../results/figures/")
+suppressMessages(silent <- lapply(
+  c("knitr", "kableExtra", "tidyverse", "broom", "cowplot"), 
+  library, character.only=T))
+```
+
+```{r prep}
+make_qqplot_with_gc <- function(p_vec, title_text="", thin=T) {
+  p_vec <- sort(p_vec[!is.na(p_vec)])
+  gc <- gControl(p_vec)
+  plot_title <- paste0(title_text, "\n(lambda=", round(gc, 2), ")")
+  qq_df <- tibble(x=-log10(1:length(p_vec) / length(p_vec)),
+                  y=-log10(p_vec))
+  if (thin) qq_df <- qq_df[-sample(which(p_vec > 0.05),  # Thin variants w/ p > 0.05
+                                   size=round(sum(p_vec > 0.05) * 0.99)), ]
+    # slice(-sample(which(.$y < 1), size=round(sum(.$y < 1) * 0.9)))  
+  ggplot(qq_df, aes(x=x, y=y)) +
+    geom_point() +
+    geom_abline(slope=1, color="red") +
+    labs(x="Expected (-logP)", y="Observed (-logP)", title=plot_title)
+}
+
+gControl <- function(p_vals) {
+  # See van Iterson 2017 methods and/or Lehne 2015 code for details on genomic control for EWAS
+  # Below is modeled after Lehne 2015
+  lambda <- median(qchisq(p_vals, df=1, lower.tail=F), 
+                   na.rm=T) / qchisq(0.5, df=1)
+  round(lambda, 2)
+}
+```
+
+# Initial run: FFQ PC1 -> HbA1c
+
+Model: HbA1c ~ SNP + ffq_PC1 + SNP*ffq_PC1 + PCs + age + sex + genotyping array
+
+CURRENTLY THESE RESULTS INCLUDE ALL INFO SCORES
+
+```{r load-results}
+chr22_mfi <- read_tsv("../data/processed/ukb_mfi_chr22_v3.txt", 
+                      col_names=c("locID", "rsID", "pos", "ref", "alt", "maf", "idk", "info")) %>%
+  select(rsID, maf, info)
+
+chr22_res <- read_tsv("~/Downloads/cd1c8409-a11a-42c1-ac38-bb3dc5d29b57_run_GEM_50120382-ddb6-435b-9232-6da72e906d90_call-cat_results_all_results.txt")
+```
+
+```{r chr22-res, warning=F}
+plot_grid(
+  make_qqplot_with_gc(chr22_res$P_Value_Interaction, "1-DF"),
+  make_qqplot_with_gc(chr22_res$P_Value_Joint, "2-DF")
+)
+
+qqman::manhattan(filter(chr22_res, P_Value_Interaction < 0.01),
+                 chr="CHR", bp="POS", p="P_Value_Interaction", 
+                 main="Chr. 22 manhattan plot (1-DF)")
+
+qqman::manhattan(filter(chr22_res, P_Value_Joint < 0.01),
+                 chr="CHR", bp="POS", p="P_Value_Joint", 
+                 main="Chr. 22 manhattan plot (2-DF)")
+```
+
+```{r load-data-2}
+# parameters
+# **notebook_name**: The name of this notebook (or what you would like to save the notebook as).  
+# **chr_col**: Chromosome column name in the summary statistics file. (Default="CHR")  
+# **pos_col**: Position column name in the summary statistics file. (Default="POS")  
+# **ref_col**: Reference allele column name in the summary statistics file. (Default="Allele1")  
+# **alt_col**: Alternate allele column name in the summary statistics file. (Default="Allele2")  
+# **alt_frq_col**: Alternate allele frequency column name in the summary statistics file. (Default="AF_Allele2")  
+# **alt_count_col**: Alternate allele count column name in the summary statistics file. (Default="AC_Allele2")  
+# **n_col**: Number of samples column name in the summary statistics file. (Default="N")  
+# **pval_col**: P-value column name in the summary statistics file. (Default="p.value")  
+# **beta_col**: Effect estimate column name in the summary statistics file. (Default=NULL)  
+# **se_col**: Standard error column name in the summary statistics file. (Default=NULL)  
+# **rsid_col**: RsID column name in the summary statistics file. (Default=NULL)
+
+# Downloads and opens a file either stored in a google bucket or locally
+get_data <- function(in_file) {
+    if (!file.exists(in_file)) {
+        if (!startsWith(in_file, "gs://")){
+            print("File must either exist locally or be a GCS link.")
+            quit()
+        } else {
+            system(paste0("gsutil cp ", in_file, " ./"))
+        }
+    }
+    return(fread(basename(in_file)))
+}
+
+chr_col="CHR" 
+pos_col="POS" 
+ref_col="Allele2" 
+alt_col="Allele1"
+alt_frq_col="AF" 
+pval_col="P_Value_Interaction"
+beta_col="Beta_Interaction_1"
+var_col="Var_Beta_Interaction_1_1"
+rsid_col="SNPID"
+
+## Processes variant summary statistics files
+load_and_process <- function(in_file, chr_col="chr", pos_col="pos", ref_col="ref", alt_col="alt", alt_frq_col="freq", alt_count_col=NA, n_col="n.obs", pval_col="P", beta_col=NA, se_col="Score.SE", rsid_col="snpID", label=NULL){
+  # Get a label if none is provided
+  if (is.null(label)) label <- sub(pattern="(.*?)\\..*$", replacement="\\1", basename(in_file))
+
+  # Define the output file paths
+  out.all.file <- paste0(label, "_allvariants.tsv")
+  out.all.file.gz <- paste0(label, "_allvariants.tsv.gz")
+  out.some.file <- paste0(label, "_Plt0.01.csv")
+  out.least.file <- paste0(label, "_Plt5e-6.csv")
+
+  # Download/load the file, add columns and format
+  # data <- get_data(in_file) %>%
+  data <- a %>%
+    drop_na(chr_col, pos_col, ref_col, alt_col, alt_frq_col, #n_col, 
+            pval_col) %>% 
+    unite("MarkerName", chr_col, pos_col, ref_col, alt_col, sep="_", remove=F) %>%
+    mutate(minor.allele=ifelse(alt_frq_col < 0.5, "alt", "ref"),
+           maf=ifelse(minor.allele == "alt", .[[alt_frq_col]], 1 - .[[alt_frq_col]]),
+           se=sqrt(.[[var_col]]),
+           !!chr_col := sub("^chr", "", .[[chr_col]])) %>%
+    mutate(!!chr_col := case_when(
+      .[[chr_col]] == "X" ~ 23,
+      .[[chr_col]] == "Y" ~ 24,
+      .[[chr_col]] == "M" ~ 25,
+      TRUE ~ as.numeric(.[[chr_col]])
+    )) %>%
+    select(`#MarkerName`=MarkerName, chr=chr_col, pos=pos_col, ref=ref_col, alt=alt_col,
+           minor.allele, maf, pvalue=pval_col, beta=beta_col, se, rsid=rsid_col)
+  
+  # data[[chr_col]] <- sub("^chr", "", data[[chr_col]])
+  # if (any(data[[chr_col]] == "X")) data[data[[chr_col]] == "X", chr_col] <- 23
+  # if (any(data[[chr_col]] == "Y")) data[data[[chr_col]] == "Y", chr_col] <- 24
+  # if (any(data[[chr_col]] == "M")) data[data[[chr_col]] == "M", chr_col] <- 25
+  # data[[chr_col]] <- as.numeric(data[[chr_col]])
+  # data$maf <- ifelse(data$minor.allele == "alt", data[[alt_frq_col]], 1 - data[[alt_frq_col]])
+  
+  # if (is.na(alt_count_col)){
+  #   data$mac <- 2 * data[[n_col]] * data$maf
+  # } else {
+  #   data$mac <- ifelse(data[[alt_frq_col]] < 0.5, data[[alt_count_col]], 2 * data[[n_col]] - data[[alt_count_col]])
+  # }
+
+  # # Take only the columns that we want and rename
+  # col_select <- c("MarkerName", chr_col, pos_col, ref_col, alt_col, "minor.allele", "maf", "mac", n_col, pval_col, beta_col, se_col, rsid_col)
+  # in_names <- col_select %in% names(data)
+  # col_select <- col_select[in_names]
+  # data <- data[,col_select]
+  # names(data) <- c("#MarkerName", "chr", "pos", "ref", "alt", "minor.allele", "maf", "mac", "n", "pvalue", "beta", "se", "rsid")[in_names]
+  
+  chr_col <<- "chr"; pos_col <<- "pos"; ref_col <<- "ref"; alt_col <<- "alt"; n_col <<- "n"; pval_col <<- "pvalue"; se_col <<- "se"; rsid_col <<- "rsid"
+  if (!is.na(beta_col)) beta_col <<- "beta"
+
+  # Write the reformatted files
+  fwrite(data, file=out.all.file, quote=FALSE, sep="\t", row.names=F)
+  fwrite(data[data$pvalue < 0.01, ], file=out.some.file, quote=FALSE, sep=",", row.names=F)
+  fwrite(data[data$pvalue < 5e-6, ], file=out.least.file, quote=FALSE, sep=",", row.names=F)
+
+  # Zip and index
+  bgzip(file=out.all.file, dest=out.all.file.gz, overwrite=T)
+  indexTabix(out.all.file.gz, seq=2, start=3, end=3, skip=1)
+  
+  # Move the files to a bucket if one is provided
+  if (startsWith(in_file, "gs://")){
+    bucket <<- dirname(in_file)
+    system(paste0("gsutil cp ", out.all.file.gz, bucket))
+    system(paste0("gsutil cp ", out.all.file.gz, ".tbi ", bucket))
+    system(paste0("gsutil cp ", out.least.file, bucket))
+    system(paste0("gsutil cp ", out.some.file, bucket))
+    cat(paste("All summary statistics files uploaded to:", paste0(bucket, out.all.file.gz), paste0(bucket, out.all.file.gz, ".tbi"), paste0(bucket, out.some.file), paste0(bucket, out.least.file), sep="\n"))
+  }
+  names(data)[1] <- "MarkerName"
+  return(data)
+}
+
+new_data <- load_and_process(in_file, label=label)
+```
+
+```{r bin-variants}
+# Make the bins
+make_bins <- function(data, chr_col="chr", pos_col="pos", pval_col="pvalue", bin_width=1e6) {
+  # Order the data
+  setorderv(data, c(chr_col, pos_col))
+    
+  # bin the data
+  list.results <- list()
+  while (nrow(data) > 0) {
+    # index into the list
+    i <- length(list.results) + 1
+    # add a list for each index in the list
+    list.results[[i]] <- list()
+    # Get the index variant by starting with the lowest P-value and working down
+    index.var <- data[which.min(data[[pval_col]]), ][1, ]
+    # first entry of this list is the index variant and its summary stats
+    list.results[[i]][["index.var"]] <- index.var    
+    # define the bin based on the index position
+    bin_range <- c(index.var$chr, index.var$pos - bin_width/2, index.var$pos + bin_width/2)
+    # add of the variants in this bin to the list
+    list.results[[i]][["all.var"]] <- data[data[[chr_col]] == bin_range[1] & data[[pos_col]] > as.numeric(bin_range[2]) & data[[pos_col]] <= as.numeric(bin_range[3]), ]
+    data <- data[!(data$MarkerName %in% list.results[[i]][["all.var"]]$MarkerName), ]
+    i <- i + 1     
+  }
+  return(list.results)
+}
+
+bin_variants <- function(data, out.file, beta_col=NA, pos_col="pos") {
+  # calculate odds ratio
+  # if (!is.na(beta_col)) data$OR <- exp(data[[beta_col]])
+  
+  # Bin to get index variants per locus
+  bin_list <- make_bins(data, chr_col=chr_col, pos_col=pos_col, pval_col=pval_col)
+  
+  # Summarize bins
+  binned_index <- do.call(rbind, lapply(bin_list, function(x) cbind(x[["index.var"]], data.frame(minpos=min(x[["all.var"]][[pos_col]]), maxpos=max(x[["all.var"]][[pos_col]]), nvars=length(x[["all.var"]][[pos_col]])))))
+  
+  binned_var <- list()
+  for (i in 1:length(bin_list)){
+    binned_var[[i]] <- bin_list[[i]][["all.var"]]
+    binned_var[[i]]$index_markername <- binned_index$MarkerName[i]
+    binned_var[[i]]$bin_coordinates <- paste0(binned_index[[chr_col]][i], ":", binned_index$minpos[i], "-", binned_index$maxpos[i])
+  }
+  binned_var <- do.call(rbind, binned_var)
+  
+  # Write results
+  cat(paste("Index variants for all bins written to:", paste0(out.file,".binned.index.csv"), "\n"))
+  fwrite(binned_index, file=paste0(out.file,".binned.index.csv"))
+  cat(paste("All variant bin assignments written to:", paste0(out.file,".binned.all.csv"), "\n"))
+  fwrite(binned_var, file=paste0(out.file, ".binned.all.csv"))
+
+  # Push to GCS
+  if (!is.null(bucket)){
+    cat(paste("Index variant and all bin assignment files uploaded to:", paste0(bucket, out.file,".binned.index.csv"), paste0(bucket, out.file,".binned.all.csv"), sep="\n"))
+    system(paste0("gsutil cp ", out.file,".binned.all.csv ", out.file,".binned.index.csv ", bucket))
+  }
+  return(binned_index)
+}
+```
+
+
+
+
+# Make a Manhattan plot
+make_manhattan_frq <- function(data,  ymax=NULL, chr_col="chr", pos_col="pos", alt_frq_col="maf", pval_col="pvalue", suggestiveline=-log10(5e-05), genomewideline=-log10(5e-08)){
+    if (is.null(ymax)){
+        ylim <- c(0, ceiling(-log10(min(data[[pval_col]]))))
+    } else {
+        ylim <- c(0, ymax)
+    }
+    
+    # Make the plots
+    options(repr.plot.width=12, repr.plot.height=6); par(ps=18, mar=c(5,5,5,5))
+    print(paste("Common SNPs:", sum(data[[alt_frq_col]] >= 0.01)))
+    manhattan(data[which(data[[alt_frq_col]] >= 0.01),], chr=chr_col, bp=pos_col, p=pval_col, suggestiveline=suggestiveline, genomewideline=genomewideline, ylim=ylim, main="Common Variants (AF > 1%)")
+
+    print(paste("Rare SNPs:", sum(data[[alt_frq_col]] < 0.01)))
+    manhattan(data[which(data[[alt_frq_col]] < 0.01),], chr=chr_col, bp=pos_col, p=pval_col, suggestiveline=suggestiveline, genomewideline=genomewideline, ylim=ylim, main="Rare Variants (AF < 1%)")
+}
+
+# make a Quantile Quantile plot, with two types of points
+make_qq_frq <- function(pvals1, pvals2, main="QQ plot"){
+  # Process pvalues
+  pvals1 <- sort(-log10(pvals1[pvals1 > 0]))
+  pvals2 <- sort(-log10(pvals2[pvals2 > 0]))
+  ymax <- ceiling(max(max(pvals1), max(pvals2)))
+    
+  # Generate the plot
+  par(ps=18)
+  plot(x=qexp(ppoints(length(pvals1)))/log(10), y=pvals1, xlab="Expected", ylab="Observed", main=main, col="#E69F00", cex=.8, bg="#E69F00", pch=21, ylim=c(0, ymax))
+  abline(0, 1, lty=2)
+  points(x=qexp(ppoints(length(pvals2)))/log(10), y=pvals2, col="#56B4E9", cex=.8, bg="#56B4E9", pch=21)
+}
+
+# make a Quantile Quantile plot
+make_qq <- function(pvals, main="QQ plot"){
+  # Process pvalues
+  pvals <- sort(-log10(pvals[pvals > 0]))
+  
+  # Generate the plot
+  par(ps=18)
+  plot(x=qexp(ppoints(length(pvals)))/log(10), y=pvals, xlab="Expected", ylab="Observed", main=main, col="#000000", cex=.8, bg="#000000", pch=21, ylim=c(0, ceiling(max(pvals))))
+  abline(0, 1, lty=2)
+}
+
+# make the full summary plot with two QQs and one MH
+make_summary_plot <- function(data, label, pval_col="pvalue", alt_frq_col="maf", chr_col="chr", pos_col="pos"){  
+  options(repr.plot.width=12, repr.plot.height=12); par(ps=18); layout(matrix(c(1,2,3,3),nrow=2,byrow=T))
+  
+  # Make the plots
+  make_qq(data[[pval_col]], main=" ")
+  legend('topleft',c(paste0('ALL ',lam.new(data[[pval_col]]))),col=c("#000000"), pch=c(21), bty='n')
+  make_qq_frq(data[data[[alt_frq_col]] >= 0.01,][[pval_col]], data[data[[alt_frq_col]] < 0.01,][[pval_col]], main=" ")
+  legend('topleft', c(paste0('MAF >= 1%  ', lam.new(data[data[[alt_frq_col]] >= 0.01,][[pval_col]])), paste0('MAF < 1%  ', lam.new(data[data[[alt_frq_col]] < 0.01,][[pval_col]]))), col=c("#E69F00", "#56B4E9"), pch=c(21,21), pt.bg=c("#E69F00", "#56B4E9"), , bty='n')
+  manhattan(data, chr=chr_col, bp=pos_col, p=pval_col, main="All variants", suggestiveline=-log10(5e-5), genomewideline=-log10(5e-8))
+}
+
+# Calculate genomic inflation
+lam.new <- function(x,p=.5){
+  x=x[!is.na(x)]
+  x.quantile <- quantile(x,p)
+  round((qchisq(1-x.quantile,1)/qchisq(p,1)),2)
+}
+Load and preprocess the summary statistics
+This will change the format, compress, and Tabix index your summary statistics. If a GCS bucket is specified, the resulting files will be uploaded.
+
+
+
+Bin the variants.
+This preforms a rudimentary binning procedure. Starting with the variant with lowest P-value, all variants within 1kb are assigned to a bin indexed by the lead variant. This process continues, choosing the lowest P-value variant, until all variants are assigned to a bin.
+
+binned.results <- bin_variants(new_data, label)
+binned.results[order(binned.results[[pval_col]]),]
+Index variants for all bins written to: 1kg-t2d.binned.index.csv 
+All variant bin assignments written to: 1kg-t2d.binned.all.csv 
+Index variant and all bin assignment files uploaded to:
+gs://fc-e2de5fb6-5945-4d50-bcf7-c29f963b6b5b/0259f1ba-87f4-4290-9476-6ee598d01c25/w_summaryCSV/c23b454e-c583-426d-8357-5add514bd80f/call-summaryCSV1kg-t2d.binned.index.csv
+gs://fc-e2de5fb6-5945-4d50-bcf7-c29f963b6b5b/0259f1ba-87f4-4290-9476-6ee598d01c25/w_summaryCSV/c23b454e-c583-426d-8357-5add514bd80f/call-summaryCSV1kg-t2d.binned.all.csv
+
+Make Manhattan plots
+Two manhattan plots will be generated, separated by minor allele frequency.
+
+make_manhattan_frq(new_data)
+[1] "Common SNPs: 202171"
+Warning message in manhattan(data[which(data[[alt_frq_col]] >= 0.01), ], chr=chr_col, :
+“No SNP column found. OK unless you're trying to highlight.”
+[1] "Rare SNPs: 962"
+Warning message in manhattan(data[which(data[[alt_frq_col]] < 0.01), ], chr=chr_col, :
+“No SNP column found. OK unless you're trying to highlight.”
+
+
+Make QQ plots
+Two quantile-quantile plots and a single Manhattan plot will be generated.
+
+make_summary_plot(new_data, label)
+Warning message in manhattan(data, chr=chr_col, bp=pos_col, p=pval_col, main="All variants", :
+“No SNP column found. OK unless you're trying to highlight.”
+
+Upload the notebook to GCS
+If the input file is from GCS, this notebook and an HTML rendering are uploaded to GCS.
+
+if (!is.null(bucket)){
+  system(paste0("jupyter nbconvert ", label, ".ipynb --to html --output ", label, ".html"))
+  system(paste0("gsutil cp ", label, ".html ", bucket, " ", label, ".html"))
+}

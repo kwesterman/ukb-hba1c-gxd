@@ -1,0 +1,864 @@
+0a1
+> ################### ################### ################### ################### ################### ################### ###################
+12c13
+< #DIET1: date_assessmentcentre.53.1.0 -> birth year + birth month
+---
+> #DIET1: date_assessmentcentre.53.0.0 -> birth year + birth month
+17c18
+< x = str_split_fixed(diet1.0$date_assessmentcentre.53.1.0, "-", 3)
+---
+> x = str_split_fixed(diet1.0$date_assessmentcentre.53.0.0, "-", 3)
+19c20
+< colnames(x) = c("DIET1_date_year.1.0", "DIET1_date_month.1.0", "DIET1_date_day.1.0")
+---
+> colnames(x) = c("DIET1_date_year.0.0", "DIET1_date_month.0.0", "DIET1_date_day.0.0")
+36c37,38
+< 				 ifelse(diet1.0$month_of_birth.52 == "November", 11, 12)))))))))))
+---
+> 				 ifelse(diet1.0$month_of_birth.52 == "November", 11, 
+> 				 ifelse(diet1.0$month_of_birth.52 == "December", 12, NA))))))))))))
+40,41c42,43
+< diet1.0$DIET1_age_months.1.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$month_of_birth_numeric.52, (diet1.0$DIET1_date_year.1.0 - diet1.0$year_of_birth.34)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$month_of_birth_numeric.52),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$year_of_birth.34)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$month_of_birth_numeric.52)))
+---
+> diet1.0$DIET1_age_months.0.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$month_of_birth_numeric.52, (diet1.0$DIET1_date_year.0.0 - diet1.0$year_of_birth.34)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$month_of_birth_numeric.52),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$year_of_birth.34)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$month_of_birth_numeric.52)))
+47,48c49,50
+< #table(diet1.0$pregnant.3140.1.0, useNA="always")
+< diet1.0 = subset(diet1.0, pregnant.3140.1.0 != "Yes" | is.na(pregnant.3140.1.0))
+---
+> #table(diet1.0$pregnant.3140.0.0, useNA="always")
+> diet1.0 = subset(diet1.0, pregnant.3140.0.0 != "Yes" | is.na(pregnant.3140.0.0))
+57,78c59,80
+< diet1.0$DIET1_monthsfromcancerdiag.0.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.0.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.0.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.0.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.0.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.0.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.1.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.1.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.1.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.1.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.1.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.1.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.2.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.2.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.2.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.2.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.2.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.2.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.3.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.3.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.3.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.3.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.3.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.3.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.4.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.4.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.4.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.4.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.4.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.4.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.5.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.5.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.5.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.5.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.5.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.5.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.6.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.6.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.6.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.6.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.6.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.6.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.7.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.7.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.7.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.7.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.7.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.7.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.8.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.8.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.8.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.8.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.8.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.8.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.9.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.9.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.9.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.9.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.9.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.9.0)))
+< diet1.0$DIET1_monthsfromcancerdiag.10.0 = ifelse(diet1.0$DIET1_date_month.1.0 >= diet1.0$date_cancerdiag_month.40005.10.0, (diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.10.0)*12 + (diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.10.0),
+< 								  	(diet1.0$DIET1_date_year.1.0 - diet1.0$date_cancerdiag_year.40005.10.0)*12 - abs((diet1.0$DIET1_date_month.1.0 - diet1.0$date_cancerdiag_month.40005.10.0)))
+---
+> diet1.0$DIET1_monthsfromcancerdiag.0.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.0.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.0.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.0.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.0.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.0.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.1.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.1.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.1.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.1.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.1.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.1.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.2.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.2.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.2.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.2.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.2.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.2.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.3.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.3.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.3.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.3.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.3.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.3.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.4.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.4.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.4.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.4.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.4.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.4.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.5.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.5.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.5.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.5.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.5.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.5.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.6.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.6.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.6.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.6.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.6.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.6.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.7.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.7.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.7.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.7.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.7.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.7.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.8.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.8.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.8.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.8.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.8.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.8.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.9.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.9.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.9.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.9.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.9.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.9.0)))
+> diet1.0$DIET1_monthsfromcancerdiag.10.0 = ifelse(diet1.0$DIET1_date_month.0.0 >= diet1.0$date_cancerdiag_month.40005.10.0, (diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.10.0)*12 + (diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.10.0),
+> 								  	(diet1.0$DIET1_date_year.0.0 - diet1.0$date_cancerdiag_year.40005.10.0)*12 - abs((diet1.0$DIET1_date_month.0.0 - diet1.0$date_cancerdiag_month.40005.10.0)))
+98,99d99
+< 
+< 
+110,113c110,113
+< #table(diet1.0$cookedveg_TBSperday.1289.1.0,useNA="always")
+< diet1.0$cookedveg_TBSperday.1289.1.0_QT = as.numeric(ifelse(diet1.0$cookedveg_TBSperday.1289.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$cookedveg_TBSperday.1289.1.0) | diet1.0$cookedveg_TBSperday.1289.0.0 == -1 | diet1.0$cookedveg_TBSperday.1289.0.0 == -3, "NA", 
+< 					diet1.0$cookedveg_TBSperday.1289.1.0)))
+---
+> #table(diet1.0$cookedveg_TBSperday.1289.0.0,useNA="always")
+> diet1.0$cookedveg_TBSperday.1289.0.0_QT = as.numeric(ifelse(diet1.0$cookedveg_TBSperday.1289.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$cookedveg_TBSperday.1289.0.0) | diet1.0$cookedveg_TBSperday.1289.0.0 == -1 | diet1.0$cookedveg_TBSperday.1289.0.0 == -3, "NA", 
+> 					diet1.0$cookedveg_TBSperday.1289.0.0)))
+115,153c115,153
+< #table(diet1.0$rawveg_TBSperday.1299.1.0,useNA="always")
+< diet1.0$rawveg_TBSperday.1299.1.0_QT = as.numeric(ifelse(diet1.0$rawveg_TBSperday.1299.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$rawveg_TBSperday.1299.1.0) | diet1.0$rawveg_TBSperday.1299.0.0 == -1 | diet1.0$rawveg_TBSperday.1299.0.0 == -3, "NA", 
+< 					diet1.0$rawveg_TBSperday.1299.1.0)))
+< 
+< #table(diet1.0$freshfruit_piecesperday.1309.1.0,useNA="always")
+< diet1.0$freshfruit_piecesperday.1309.1.0_QT = as.numeric(ifelse(diet1.0$freshfruit_piecesperday.1309.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$freshfruit_piecesperday.1309.1.0) | diet1.0$freshfruit_piecesperday.1309.0.0 == -1 | diet1.0$freshfruit_piecesperday.1309.0.0 == -3, "NA", 
+< 					diet1.0$freshfruit_piecesperday.1309.1.0)))
+< 
+< #table(diet1.0$driedfruit_piecesperday.1319.1.0,useNA="always")
+< diet1.0$driedfruit_piecesperday.1319.1.0_QT = as.numeric(ifelse(diet1.0$driedfruit_piecesperday.1319.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$driedfruit_piecesperday.1319.1.0) | diet1.0$driedfruit_piecesperday.1319.0.0 == -1 | diet1.0$driedfruit_piecesperday.1319.0.0 == -3, "NA", 
+< 					diet1.0$driedfruit_piecesperday.1319.1.0)))
+< 
+< #table(diet1.0$bread_slicesperweek.1438.1.0,useNA="always")
+< diet1.0$bread_slicesperweek.1438.1.0_QT = as.numeric(ifelse(diet1.0$bread_slicesperweek.1438.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$bread_slicesperweek.1438.1.0) | diet1.0$bread_slicesperweek.1438.0.0 == -1 | diet1.0$bread_slicesperweek.1438.0.0 == -3, "NA", 
+< 					diet1.0$bread_slicesperweek.1438.1.0)))
+< 
+< #table(diet1.0$cereal_bowlsperweek.1458.1.0,useNA="always")
+< diet1.0$cereal_bowlsperweek.1458.1.0_QT = as.numeric(ifelse(diet1.0$cereal_bowlsperweek.1458.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$cereal_bowlsperweek.1458.1.0) | diet1.0$cereal_bowlsperweek.1458.0.0 == -1 | diet1.0$cereal_bowlsperweek.1458.0.0 == -3, "NA", 
+< 					diet1.0$cereal_bowlsperweek.1458.1.0)))
+< 
+< #table(diet1.0$tea_cupsperday.1488.1.0,useNA="always")
+< diet1.0$tea_cupsperday.1488.1.0_QT = as.numeric(ifelse(diet1.0$tea_cupsperday.1488.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$tea_cupsperday.1488.1.0) | diet1.0$tea_cupsperday.1488.0.0 == -1 | diet1.0$tea_cupsperday.1488.0.0 == -3, "NA", 
+< 					diet1.0$tea_cupsperday.1488.1.0)))
+< 
+< #table(diet1.0$coffee_cupsperday.1498.1.0,useNA="always")
+< diet1.0$coffee_cupsperday.1498.1.0_QT = as.numeric(ifelse(diet1.0$coffee_cupsperday.1498.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$coffee_cupsperday.1498.1.0) | diet1.0$coffee_cupsperday.1498.0.0 == -1 | diet1.0$coffee_cupsperday.1498.0.0 == -3, "NA", 
+< 					diet1.0$coffee_cupsperday.1498.1.0)))
+< 
+< #table(diet1.0$water_glassesperday.1528.1.0,useNA="always")
+< diet1.0$water_glassesperday.1528.1.0_QT = as.numeric(ifelse(diet1.0$water_glassesperday.1528.0.0 == -10, 0.5,
+< 					ifelse(is.na(diet1.0$water_glassesperday.1528.1.0) | diet1.0$water_glassesperday.1528.0.0 == -1 | diet1.0$water_glassesperday.1528.0.0 == -3, "NA", 
+< 					diet1.0$water_glassesperday.1528.1.0)))
+---
+> #table(diet1.0$rawveg_TBSperday.1299.0.0,useNA="always")
+> diet1.0$rawveg_TBSperday.1299.0.0_QT = as.numeric(ifelse(diet1.0$rawveg_TBSperday.1299.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$rawveg_TBSperday.1299.0.0) | diet1.0$rawveg_TBSperday.1299.0.0 == -1 | diet1.0$rawveg_TBSperday.1299.0.0 == -3, "NA", 
+> 					diet1.0$rawveg_TBSperday.1299.0.0)))
+> 
+> #table(diet1.0$freshfruit_piecesperday.1309.0.0,useNA="always")
+> diet1.0$freshfruit_piecesperday.1309.0.0_QT = as.numeric(ifelse(diet1.0$freshfruit_piecesperday.1309.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$freshfruit_piecesperday.1309.0.0) | diet1.0$freshfruit_piecesperday.1309.0.0 == -1 | diet1.0$freshfruit_piecesperday.1309.0.0 == -3, "NA", 
+> 					diet1.0$freshfruit_piecesperday.1309.0.0)))
+> 
+> #table(diet1.0$driedfruit_piecesperday.1319.0.0,useNA="always")
+> diet1.0$driedfruit_piecesperday.1319.0.0_QT = as.numeric(ifelse(diet1.0$driedfruit_piecesperday.1319.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$driedfruit_piecesperday.1319.0.0) | diet1.0$driedfruit_piecesperday.1319.0.0 == -1 | diet1.0$driedfruit_piecesperday.1319.0.0 == -3, "NA", 
+> 					diet1.0$driedfruit_piecesperday.1319.0.0)))
+> 
+> #table(diet1.0$bread_slicesperweek.1438.0.0,useNA="always")
+> diet1.0$bread_slicesperweek.1438.0.0_QT = as.numeric(ifelse(diet1.0$bread_slicesperweek.1438.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$bread_slicesperweek.1438.0.0) | diet1.0$bread_slicesperweek.1438.0.0 == -1 | diet1.0$bread_slicesperweek.1438.0.0 == -3, "NA", 
+> 					diet1.0$bread_slicesperweek.1438.0.0)))
+> 
+> #table(diet1.0$cereal_bowlsperweek.1458.0.0,useNA="always")
+> diet1.0$cereal_bowlsperweek.1458.0.0_QT = as.numeric(ifelse(diet1.0$cereal_bowlsperweek.1458.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$cereal_bowlsperweek.1458.0.0) | diet1.0$cereal_bowlsperweek.1458.0.0 == -1 | diet1.0$cereal_bowlsperweek.1458.0.0 == -3, "NA", 
+> 					diet1.0$cereal_bowlsperweek.1458.0.0)))
+> 
+> #table(diet1.0$tea_cupsperday.1488.0.0,useNA="always")
+> diet1.0$tea_cupsperday.1488.0.0_QT = as.numeric(ifelse(diet1.0$tea_cupsperday.1488.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$tea_cupsperday.1488.0.0) | diet1.0$tea_cupsperday.1488.0.0 == -1 | diet1.0$tea_cupsperday.1488.0.0 == -3, "NA", 
+> 					diet1.0$tea_cupsperday.1488.0.0)))
+> 
+> #table(diet1.0$coffee_cupsperday.1498.0.0,useNA="always")
+> diet1.0$coffee_cupsperday.1498.0.0_QT = as.numeric(ifelse(diet1.0$coffee_cupsperday.1498.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$coffee_cupsperday.1498.0.0) | diet1.0$coffee_cupsperday.1498.0.0 == -1 | diet1.0$coffee_cupsperday.1498.0.0 == -3, "NA", 
+> 					diet1.0$coffee_cupsperday.1498.0.0)))
+> 
+> #table(diet1.0$water_glassesperday.1528.0.0,useNA="always")
+> diet1.0$water_glassesperday.1528.0.0_QT = as.numeric(ifelse(diet1.0$water_glassesperday.1528.0.0 == -10, 0.5,
+> 					ifelse(is.na(diet1.0$water_glassesperday.1528.0.0) | diet1.0$water_glassesperday.1528.0.0 == -1 | diet1.0$water_glassesperday.1528.0.0 == -3, "NA", 
+> 					diet1.0$water_glassesperday.1528.0.0)))
+159,160c159,160
+< table(diet1.0$alcohol_overallfreq.1558.1.0,diet1.0$champagnewhitewine_glassesperweek.1578.1.0)
+< 	## Once or twice a week
+---
+> table(diet1.0$alcohol_overallfreq.1558.0.0,diet1.0$champagnewhitewine_glassesperweek.1578.0.0)
+> 	## Once or twice a weekf
+167c167
+< table(diet1.0$alcohol_overallfreq.1558.1.0,diet1.0$redwine_glassespermonth.4407.1.0)
+---
+> table(diet1.0$alcohol_overallfreq.1558.0.0,diet1.0$redwine_glassespermonth.4407.0.0)
+194,195c194,195
+< #table(diet1.0$champagnewhitewine_glassesperweek.1578.1.0,useNA="always")
+< diet1.0$champagnewhitewine_glassesperweek.1578.1.0_QT = as.numeric(ifelse(
+---
+> #table(diet1.0$champagnewhitewine_glassesperweek.1578.0.0,useNA="always")
+> diet1.0$champagnewhitewine_glassesperweek.1578.0.0_QT = as.numeric(ifelse(
+197,201c197,201
+< 							diet1.0$champagnewhitewine_glassesperweek.1578.0.0 == -3, median(diet1.0$champagnewhitewine_glassesperweek.1578.1.0, na.rm=T), 
+< 							diet1.0$champagnewhitewine_glassesperweek.1578.1.0))	
+< table(diet1.0$champagnewhitewine_glassesperweek.1578.1.0_QT, useNA="always")			
+< #table(diet1.0$champagnewhitewine_glassespermonth.4418.1.0,useNA="always")
+< diet1.0$champagnewhitewine_glassespermonth.4418.1.0_QT = as.numeric(ifelse(
+---
+> 							diet1.0$champagnewhitewine_glassesperweek.1578.0.0 == -3, median(diet1.0$champagnewhitewine_glassesperweek.1578.0.0, na.rm=T), 
+> 							diet1.0$champagnewhitewine_glassesperweek.1578.0.0))	
+> table(diet1.0$champagnewhitewine_glassesperweek.1578.0.0_QT, useNA="always")			
+> #table(diet1.0$champagnewhitewine_glassespermonth.4418.0.0,useNA="always")
+> diet1.0$champagnewhitewine_glassespermonth.4418.0.0_QT = as.numeric(ifelse(
+203,205c203,205
+< 							diet1.0$champagnewhitewine_glassespermonth.4418.0.0 == -3, median(diet1.0$champagnewhitewine_glassespermonth.4418.1.0, na.rm=T),
+< 							diet1.0$champagnewhitewine_glassespermonth.4418.1.0))
+< table(diet1.0$champagnewhitewine_glassespermonth.4418.1.0_QT, useNA="always")			
+---
+> 							diet1.0$champagnewhitewine_glassespermonth.4418.0.0 == -3, median(diet1.0$champagnewhitewine_glassespermonth.4418.0.0, na.rm=T),
+> 							diet1.0$champagnewhitewine_glassespermonth.4418.0.0))
+> table(diet1.0$champagnewhitewine_glassespermonth.4418.0.0_QT, useNA="always")			
+208c208
+< diet1.0$champagnewhitewine_glassespermonth.derived.1.0_QT = as.numeric(
+---
+> diet1.0$champagnewhitewine_glassespermonth.derived.0.0_QT = as.numeric(
+213c213
+< 								4*diet1.0$champagnewhitewine_glassesperweek.1578.1.0_QT, 
+---
+> 								4*diet1.0$champagnewhitewine_glassesperweek.1578.0.0_QT, 
+217c217
+< 								diet1.0$champagnewhitewine_glassespermonth.4418.1.0_QT, 
+---
+> 								diet1.0$champagnewhitewine_glassespermonth.4418.0.0_QT, 
+221c221
+< table(diet1.0$champagnewhitewine_glassespermonth.derived.1.0_QT, useNA="always")	
+---
+> table(diet1.0$champagnewhitewine_glassespermonth.derived.0.0_QT, useNA="always")	
+223,224c223,224
+< #table(diet1.0$redwine_glassesperweek.1568.1.0,useNA="always")
+< diet1.0$redwine_glassesperweek.1568.1.0_QT = as.numeric(ifelse(
+---
+> #table(diet1.0$redwine_glassesperweek.1568.0.0,useNA="always")
+> diet1.0$redwine_glassesperweek.1568.0.0_QT = as.numeric(ifelse(
+226,230c226,230
+< 							diet1.0$redwine_glassesperweek.1568.0.0 == -3, median(diet1.0$redwine_glassesperweek.1568.1.0, na.rm=T), 
+< 							diet1.0$redwine_glassesperweek.1568.1.0))	
+< table(diet1.0$redwine_glassesperweek.1568.1.0_QT, useNA="always")			
+< #table(diet1.0$redwine_glassespermonth.4407.1.0,useNA="always")
+< diet1.0$redwine_glassespermonth.4407.1.0_QT = as.numeric(ifelse(
+---
+> 							diet1.0$redwine_glassesperweek.1568.0.0 == -3, median(diet1.0$redwine_glassesperweek.1568.0.0, na.rm=T), 
+> 							diet1.0$redwine_glassesperweek.1568.0.0))	
+> table(diet1.0$redwine_glassesperweek.1568.0.0_QT, useNA="always")			
+> #table(diet1.0$redwine_glassespermonth.4407.0.0,useNA="always")
+> diet1.0$redwine_glassespermonth.4407.0.0_QT = as.numeric(ifelse(
+232,234c232,234
+< 							diet1.0$redwine_glassespermonth.4407.0.0 == -3, median(diet1.0$redwine_glassespermonth.4407.1.0, na.rm=T),
+< 							diet1.0$redwine_glassespermonth.4407.1.0))
+< table(diet1.0$redwine_glassespermonth.4407.1.0_QT, useNA="always")			
+---
+> 							diet1.0$redwine_glassespermonth.4407.0.0 == -3, median(diet1.0$redwine_glassespermonth.4407.0.0, na.rm=T),
+> 							diet1.0$redwine_glassespermonth.4407.0.0))
+> table(diet1.0$redwine_glassespermonth.4407.0.0_QT, useNA="always")			
+237c237
+< diet1.0$redwine_glassespermonth.derived.1.0_QT = as.numeric(
+---
+> diet1.0$redwine_glassespermonth.derived.0.0_QT = as.numeric(
+242c242
+< 								4*diet1.0$redwine_glassesperweek.1568.1.0_QT, 
+---
+> 								4*diet1.0$redwine_glassesperweek.1568.0.0_QT, 
+246c246
+< 								diet1.0$redwine_glassespermonth.4407.1.0_QT, 
+---
+> 								diet1.0$redwine_glassespermonth.4407.0.0_QT, 
+250c250
+< table(diet1.0$redwine_glassespermonth.derived.1.0_QT, useNA="always")
+---
+> table(diet1.0$redwine_glassespermonth.derived.0.0_QT, useNA="always")
+252,253c252,253
+< #table(diet1.0$beercider_pintsperweek.1588.1.0,useNA="always")
+< diet1.0$beercider_pintsperweek.1588.1.0_QT = as.numeric(ifelse(
+---
+> #table(diet1.0$beercider_pintsperweek.1588.0.0,useNA="always")
+> diet1.0$beercider_pintsperweek.1588.0.0_QT = as.numeric(ifelse(
+255,259c255,259
+< 							diet1.0$beercider_pintsperweek.1588.0.0 == -3, median(diet1.0$beercider_pintsperweek.1588.1.0, na.rm=T), 
+< 							diet1.0$beercider_pintsperweek.1588.1.0))	
+< table(diet1.0$beercider_pintsperweek.1588.1.0_QT, useNA="always")			
+< #table(diet1.0$beercider_pintspermonth.4429.1.0,useNA="always")
+< diet1.0$beercider_pintspermonth.4429.1.0_QT = as.numeric(ifelse(
+---
+> 							diet1.0$beercider_pintsperweek.1588.0.0 == -3, median(diet1.0$beercider_pintsperweek.1588.0.0, na.rm=T), 
+> 							diet1.0$beercider_pintsperweek.1588.0.0))	
+> table(diet1.0$beercider_pintsperweek.1588.0.0_QT, useNA="always")			
+> #table(diet1.0$beercider_pintspermonth.4429.0.0,useNA="always")
+> diet1.0$beercider_pintspermonth.4429.0.0_QT = as.numeric(ifelse(
+261,263c261,263
+< 							diet1.0$beercider_pintspermonth.4429.0.0 == -3, median(diet1.0$beercider_pintspermonth.4429.1.0, na.rm=T),
+< 							diet1.0$beercider_pintspermonth.4429.1.0))
+< table(diet1.0$beercider_pintspermonth.4429.1.0_QT, useNA="always")			
+---
+> 							diet1.0$beercider_pintspermonth.4429.0.0 == -3, median(diet1.0$beercider_pintspermonth.4429.0.0, na.rm=T),
+> 							diet1.0$beercider_pintspermonth.4429.0.0))
+> table(diet1.0$beercider_pintspermonth.4429.0.0_QT, useNA="always")			
+266c266
+< diet1.0$beercider_pintspermonth.derived.1.0_QT = as.numeric(
+---
+> diet1.0$beercider_pintspermonth.derived.0.0_QT = as.numeric(
+271c271
+< 								4*diet1.0$beercider_pintsperweek.1588.1.0_QT, 
+---
+> 								4*diet1.0$beercider_pintsperweek.1588.0.0_QT, 
+275c275
+< 								diet1.0$beercider_pintspermonth.4429.1.0_QT, 
+---
+> 								diet1.0$beercider_pintspermonth.4429.0.0_QT, 
+279c279
+< table(diet1.0$beercider_pintspermonth.derived.1.0_QT, useNA="always")
+---
+> table(diet1.0$beercider_pintspermonth.derived.0.0_QT, useNA="always")
+281,282c281,282
+< #table(diet1.0$spirits_measuresperweek.1598.1.0,useNA="always")
+< diet1.0$spirits_measuresperweek.1598.1.0_QT = as.numeric(ifelse(
+---
+> #table(diet1.0$spirits_measuresperweek.1598.0.0,useNA="always")
+> diet1.0$spirits_measuresperweek.1598.0.0_QT = as.numeric(ifelse(
+284,288c284,288
+< 							diet1.0$spirits_measuresperweek.1598.0.0 == -3, median(diet1.0$spirits_measuresperweek.1598.1.0, na.rm=T), 
+< 							diet1.0$spirits_measuresperweek.1598.1.0))	
+< table(diet1.0$spirits_measuresperweek.1598.1.0_QT, useNA="always")			
+< #table(diet1.0$spirits_measurespermonth.4440.1.0,useNA="always")
+< diet1.0$spirits_measurespermonth.4440.1.0_QT = as.numeric(ifelse(
+---
+> 							diet1.0$spirits_measuresperweek.1598.0.0 == -3, median(diet1.0$spirits_measuresperweek.1598.0.0, na.rm=T), 
+> 							diet1.0$spirits_measuresperweek.1598.0.0))	
+> table(diet1.0$spirits_measuresperweek.1598.0.0_QT, useNA="always")			
+> #table(diet1.0$spirits_measurespermonth.4440.0.0,useNA="always")
+> diet1.0$spirits_measurespermonth.4440.0.0_QT = as.numeric(ifelse(
+290,292c290,292
+< 							diet1.0$spirits_measurespermonth.4440.0.0 == -3, median(diet1.0$spirits_measurespermonth.4440.1.0, na.rm=T),
+< 							diet1.0$spirits_measurespermonth.4440.1.0))
+< table(diet1.0$spirits_measurespermonth.4440.1.0_QT, useNA="always")			
+---
+> 							diet1.0$spirits_measurespermonth.4440.0.0 == -3, median(diet1.0$spirits_measurespermonth.4440.0.0, na.rm=T),
+> 							diet1.0$spirits_measurespermonth.4440.0.0))
+> table(diet1.0$spirits_measurespermonth.4440.0.0_QT, useNA="always")			
+294c294
+< diet1.0$spirits_measurespermonth.derived.1.0_QT = as.numeric(
+---
+> diet1.0$spirits_measurespermonth.derived.0.0_QT = as.numeric(
+299c299
+< 								4*diet1.0$spirits_measuresperweek.1598.1.0_QT, 
+---
+> 								4*diet1.0$spirits_measuresperweek.1598.0.0_QT, 
+303c303
+< 								diet1.0$spirits_measurespermonth.4440.1.0_QT, 
+---
+> 								diet1.0$spirits_measurespermonth.4440.0.0_QT, 
+307c307
+< table(diet1.0$spirits_measurespermonth.derived.1.0_QT, useNA="always")
+---
+> table(diet1.0$spirits_measurespermonth.derived.0.0_QT, useNA="always")
+309,310c309,310
+< #table(diet1.0$fortwine_glassesperweek.1608.1.0,useNA="always")
+< diet1.0$fortwine_glassesperweek.1608.1.0_QT = as.numeric(ifelse(
+---
+> #table(diet1.0$fortwine_glassesperweek.1608.0.0,useNA="always")
+> diet1.0$fortwine_glassesperweek.1608.0.0_QT = as.numeric(ifelse(
+312,316c312,316
+< 							diet1.0$fortwine_glassesperweek.1608.0.0 == -3, median(diet1.0$fortwine_glassesperweek.1608.1.0, na.rm=T), 
+< 							diet1.0$fortwine_glassesperweek.1608.1.0))	
+< table(diet1.0$fortwine_glassesperweek.1608.1.0_QT, useNA="always")			
+< #table(diet1.0$fortwine_glassespermonth.4451.1.0,useNA="always")
+< diet1.0$fortwine_glassespermonth.4451.1.0_QT = as.numeric(ifelse(
+---
+> 							diet1.0$fortwine_glassesperweek.1608.0.0 == -3, median(diet1.0$fortwine_glassesperweek.1608.0.0, na.rm=T), 
+> 							diet1.0$fortwine_glassesperweek.1608.0.0))	
+> table(diet1.0$fortwine_glassesperweek.1608.0.0_QT, useNA="always")			
+> #table(diet1.0$fortwine_glassespermonth.4451.0.0,useNA="always")
+> diet1.0$fortwine_glassespermonth.4451.0.0_QT = as.numeric(ifelse(
+318,320c318,320
+< 							diet1.0$fortwine_glassespermonth.4451.0.0 == -3, median(diet1.0$fortwine_glassespermonth.4451.1.0, na.rm=T),
+< 							diet1.0$fortwine_glassespermonth.4451.1.0))
+< table(diet1.0$fortwine_glassespermonth.4451.1.0_QT, useNA="always")			
+---
+> 							diet1.0$fortwine_glassespermonth.4451.0.0 == -3, median(diet1.0$fortwine_glassespermonth.4451.0.0, na.rm=T),
+> 							diet1.0$fortwine_glassespermonth.4451.0.0))
+> table(diet1.0$fortwine_glassespermonth.4451.0.0_QT, useNA="always")			
+323c323
+< diet1.0$fortwine_glassespermonth.derived.1.0_QT = as.numeric(
+---
+> diet1.0$fortwine_glassespermonth.derived.0.0_QT = as.numeric(
+328c328
+< 								4*diet1.0$fortwine_glassesperweek.1608.1.0_QT, 
+---
+> 								4*diet1.0$fortwine_glassesperweek.1608.0.0_QT, 
+332c332
+< 								diet1.0$fortwine_glassespermonth.4451.1.0_QT, 
+---
+> 								diet1.0$fortwine_glassespermonth.4451.0.0_QT, 
+336c336
+< table(diet1.0$fortwine_glassespermonth.derived.1.0_QT, useNA="always")
+---
+> table(diet1.0$fortwine_glassespermonth.derived.0.0_QT, useNA="always")
+338,339c338,339
+< #table(diet1.0$otheralcohol_glassesperweek.5364.1.0,useNA="always")
+< diet1.0$otheralcohol_glassesperweek.5364.1.0_QT = as.numeric(ifelse(
+---
+> #table(diet1.0$otheralcohol_glassesperweek.5364.0.0,useNA="always")
+> diet1.0$otheralcohol_glassesperweek.5364.0.0_QT = as.numeric(ifelse(
+341,345c341,345
+< 							diet1.0$otheralcohol_glassesperweek.5364.0.0 == -3, median(diet1.0$otheralcohol_glassesperweek.5364.1.0, na.rm=T), 
+< 							diet1.0$otheralcohol_glassesperweek.5364.1.0))	
+< table(diet1.0$otheralcohol_glassesperweek.5364.1.0_QT, useNA="always")			
+< #table(diet1.0$otheralcohol_glassespermonth.4462.1.0,useNA="always")
+< diet1.0$otheralcohol_glassespermonth.4462.1.0_QT = as.numeric(ifelse(
+---
+> 							diet1.0$otheralcohol_glassesperweek.5364.0.0 == -3, median(diet1.0$otheralcohol_glassesperweek.5364.0.0, na.rm=T), 
+> 							diet1.0$otheralcohol_glassesperweek.5364.0.0))	
+> table(diet1.0$otheralcohol_glassesperweek.5364.0.0_QT, useNA="always")			
+> #table(diet1.0$otheralcohol_glassespermonth.4462.0.0,useNA="always")
+> diet1.0$otheralcohol_glassespermonth.4462.0.0_QT = as.numeric(ifelse(
+347,349c347,349
+< 							diet1.0$otheralcohol_glassespermonth.4462.0.0 == -3, median(diet1.0$otheralcohol_glassespermonth.4462.1.0, na.rm=T),
+< 							diet1.0$otheralcohol_glassespermonth.4462.1.0))
+< table(diet1.0$otheralcohol_glassespermonth.4462.1.0_QT, useNA="always")			
+---
+> 							diet1.0$otheralcohol_glassespermonth.4462.0.0 == -3, median(diet1.0$otheralcohol_glassespermonth.4462.0.0, na.rm=T),
+> 							diet1.0$otheralcohol_glassespermonth.4462.0.0))
+> table(diet1.0$otheralcohol_glassespermonth.4462.0.0_QT, useNA="always")			
+352c352
+< diet1.0$otheralcohol_glassespermonth.derived.1.0_QT = as.numeric(
+---
+> diet1.0$otheralcohol_glassespermonth.derived.0.0_QT = as.numeric(
+357c357
+< 								4*diet1.0$otheralcohol_glassesperweek.5364.1.0_QT, 
+---
+> 								4*diet1.0$otheralcohol_glassesperweek.5364.0.0_QT, 
+361c361
+< 								diet1.0$otheralcohol_glassespermonth.4462.1.0_QT, 
+---
+> 								diet1.0$otheralcohol_glassespermonth.4462.0.0_QT, 
+365,366c365
+< table(diet1.0$otheralcohol_glassespermonth.derived.1.0_QT, useNA="always")
+< #####################################################################
+---
+> table(diet1.0$otheralcohol_glassespermonth.derived.0.0_QT, useNA="always")
+370,373c369,372
+< diet1.0$anyalcohol_glassespermonth.derived.1.0_QT = rowSums(subset(diet1.0, select = c(champagnewhitewine_glassespermonth.derived.1.0_QT, redwine_glassespermonth.derived.1.0_QT, 
+< 						beercider_pintspermonth.derived.1.0_QT, spirits_measurespermonth.derived.1.0_QT,
+< 						fortwine_glassespermonth.derived.1.0_QT, otheralcohol_glassespermonth.derived.1.0_QT)), na.rm = TRUE)
+< table(diet1.0$anyalcohol_glassespermonth.derived.1.0_QT, useNA="always")
+---
+> diet1.0$anyalcohol_glassespermonth.derived.0.0_QT = rowSums(subset(diet1.0, select = c(champagnewhitewine_glassespermonth.derived.0.0_QT, redwine_glassespermonth.derived.0.0_QT, 
+> 						beercider_pintspermonth.derived.0.0_QT, spirits_measurespermonth.derived.0.0_QT,
+> 						fortwine_glassespermonth.derived.0.0_QT, otheralcohol_glassespermonth.derived.0.0_QT)), na.rm = TRUE)
+> table(diet1.0$anyalcohol_glassespermonth.derived.0.0_QT, useNA="always")
+375,376d373
+< 
+< 
+390,391c387,388
+< #table(diet1.0$oilyfish_overallfreq.1329.1.0,useNA="always")		
+< diet1.0$oilyfish_overallfreq.1329.1.0_QT = as.numeric(ifelse(diet1.0$oilyfish_overallfreq.1329.0.0 == "Once or more daily", 365, 
+---
+> #table(diet1.0$oilyfish_overallfreq.1329.0.0,useNA="always")		
+> diet1.0$oilyfish_overallfreq.1329.0.0_QT = as.numeric(ifelse(diet1.0$oilyfish_overallfreq.1329.0.0 == "Once or more daily", 365, 
+399,400c396,397
+< #table(diet1.0$nonoilyfish_overallfreq.1339.1.0,useNA="always")
+< diet1.0$nonoilyfish_overallfreq.1339.1.0_QT = as.numeric(ifelse(diet1.0$nonoilyfish_overallfreq.1339.0.0 == "Once or more daily", 365, 
+---
+> #table(diet1.0$nonoilyfish_overallfreq.1339.0.0,useNA="always")
+> diet1.0$nonoilyfish_overallfreq.1339.0.0_QT = as.numeric(ifelse(diet1.0$nonoilyfish_overallfreq.1339.0.0 == "Once or more daily", 365, 
+407,408c404,405
+< #table(diet1.0$processmeat_overallfreq.1349.1.0,useNA="always")
+< diet1.0$processmeat_overallfreq.1349.1.0_QT = as.numeric(ifelse(diet1.0$processmeat_overallfreq.1349.0.0 == "Once or more daily", 365, 
+---
+> #table(diet1.0$processmeat_overallfreq.1349.0.0,useNA="always")
+> diet1.0$processmeat_overallfreq.1349.0.0_QT = as.numeric(ifelse(diet1.0$processmeat_overallfreq.1349.0.0 == "Once or more daily", 365, 
+415,416c412,413
+< #table(diet1.0$poultry_overallfreq.1359.1.0,useNA="always")
+< diet1.0$poultry_overallfreq.1359.1.0_QT = as.numeric(ifelse(diet1.0$poultry_overallfreq.1359.0.0 == "Once or more daily", 365, 
+---
+> #table(diet1.0$poultry_overallfreq.1359.0.0,useNA="always")
+> diet1.0$poultry_overallfreq.1359.0.0_QT = as.numeric(ifelse(diet1.0$poultry_overallfreq.1359.0.0 == "Once or more daily", 365, 
+423,424c420,421
+< #table(diet1.0$beef_overallfreq.1369.1.0,useNA="always")
+< diet1.0$beef_overallfreq.1369.1.0_QT = as.numeric(ifelse(diet1.0$beef_overallfreq.1369.0.0 == "Once or more daily", 365, 
+---
+> #table(diet1.0$beef_overallfreq.1369.0.0,useNA="always")
+> diet1.0$beef_overallfreq.1369.0.0_QT = as.numeric(ifelse(diet1.0$beef_overallfreq.1369.0.0 == "Once or more daily", 365, 
+431,432c428,429
+< #table(diet1.0$lambmutton_overallfreq.1379.1.0,useNA="always")
+< diet1.0$lambmutton_overallfreq.1379.1.0_QT = as.numeric(ifelse(diet1.0$lambmutton_overallfreq.1379.0.0 == "Once or more daily", 365, 
+---
+> #table(diet1.0$lambmutton_overallfreq.1379.0.0,useNA="always")
+> diet1.0$lambmutton_overallfreq.1379.0.0_QT = as.numeric(ifelse(diet1.0$lambmutton_overallfreq.1379.0.0 == "Once or more daily", 365, 
+439,440c436,437
+< #table(diet1.0$pork_overallfreq.1389.1.0,useNA="always")
+< diet1.0$pork_overallfreq.1389.1.0_QT = as.numeric(ifelse(diet1.0$pork_overallfreq.1389.0.0 == "Once or more daily", 365, 
+---
+> #table(diet1.0$pork_overallfreq.1389.0.0,useNA="always")
+> diet1.0$pork_overallfreq.1389.0.0_QT = as.numeric(ifelse(diet1.0$pork_overallfreq.1389.0.0 == "Once or more daily", 365, 
+447,448c444,445
+< #table(diet1.0$cheese_overallfreq.1408.1.0,useNA="always")
+< diet1.0$cheese_overallfreq.1408.1.0_QT = as.numeric(ifelse(diet1.0$cheese_overallfreq.1408.0.0 == "Once or more daily", 365, 
+---
+> #table(diet1.0$cheese_overallfreq.1408.0.0,useNA="always")
+> diet1.0$cheese_overallfreq.1408.0.0_QT = as.numeric(ifelse(diet1.0$cheese_overallfreq.1408.0.0 == "Once or more daily", 365, 
+465,466c462,463
+< #table(diet1.0$doyouaddsalt.1478.1.0,useNA="always")
+< diet1.0$doyouaddsalt.1478.1.0_QT = as.numeric(ifelse(diet1.0$doyouaddsalt.1478.0.0 == "Always", 10, 
+---
+> #table(diet1.0$doyouaddsalt.1478.0.0,useNA="always")
+> diet1.0$doyouaddsalt.1478.0.0_QT = as.numeric(ifelse(diet1.0$doyouaddsalt.1478.0.0 == "Always", 10, 
+481,482c478,479
+< #table(diet1.0$hotdrinktemp.1518.1.0,useNA="always")
+< diet1.0$hotdrinktemp.1518.1.0_QT = as.numeric(ifelse(diet1.0$hotdrinktemp.1518.0.0 == "Very hot", 10, 
+---
+> #table(diet1.0$hotdrinktemp.1518.0.0,useNA="always")
+> diet1.0$hotdrinktemp.1518.0.0_QT = as.numeric(ifelse(diet1.0$hotdrinktemp.1518.0.0 == "Very hot", 10, 
+499,500c496,497
+< #table(diet1.0$alcohol_overallfreq.1558.1.0,useNA="always")
+< diet1.0$alcohol_overallfreq.1558.1.0_QT = as.numeric(ifelse(diet1.0$alcohol_overallfreq.1558.0.0 == "Daily or almost daily", 300, 
+---
+> #table(diet1.0$alcohol_overallfreq.1558.0.0,useNA="always")
+> diet1.0$alcohol_overallfreq.1558.0.0_QT = as.numeric(ifelse(diet1.0$alcohol_overallfreq.1558.0.0 == "Daily or almost daily", 300, 
+516c513
+< #table(diet1.0$alcoholdrinkerstatus.20117.1.0,useNA="always")
+---
+> #table(diet1.0$alcoholdrinkerstatus.20117.0.0,useNA="always")
+520,521c517,518
+< diet1.0$alcoholdrinkerstatus.20117.1.0_bin = as.numeric(ifelse(diet1.0$alcoholdrinkerstatus.20117.0.0 == "Never", 0, ifelse(diet1.0$alcoholdrinkerstatus.20117.0.0 == "Previous" | diet1.0$alcoholdrinkerstatus.20117.0.0 == "Current", 1, "NA")))
+< #table(diet1.0$alcoholdrinkerstatus.20117.1.0_bin,useNA="always")
+---
+> diet1.0$alcoholdrinkerstatus.20117.0.0_bin = as.numeric(ifelse(diet1.0$alcoholdrinkerstatus.20117.0.0 == "Never", 0, ifelse(diet1.0$alcoholdrinkerstatus.20117.0.0 == "Previous" | diet1.0$alcoholdrinkerstatus.20117.0.0 == "Current", 1, "NA")))
+> #table(diet1.0$alcoholdrinkerstatus.20117.0.0_bin,useNA="always")
+529,530c526,527
+< diet1.0$alcoholdrinkerstatus.20117.1.0_bin2 = as.numeric(ifelse(diet1.0$alcoholdrinkerstatus.20117.0.0 == "Never", 0, ifelse(diet1.0$alcoholdrinkerstatus.20117.0.0 == "Current", 1, "NA")))
+< #table(diet1.0$alcoholdrinkerstatus.20117.1.0_bin2,useNA="always")
+---
+> diet1.0$alcoholdrinkerstatus.20117.0.0_bin2 = as.numeric(ifelse(diet1.0$alcoholdrinkerstatus.20117.0.0 == "Never", 0, ifelse(diet1.0$alcoholdrinkerstatus.20117.0.0 == "Current", 1, "NA")))
+> #table(diet1.0$alcoholdrinkerstatus.20117.0.0_bin2,useNA="always")
+540,541c537,538
+< #table(diet1.0$alcohol_formerdrinker_amongcurrentnondrinkers.3731.1.0,useNA="always")
+< # no additional information not captured in diet1.0$alcoholdrinkerstatus.20117.1.0
+---
+> #table(diet1.0$alcohol_formerdrinker_amongcurrentnondrinkers.3731.0.0,useNA="always")
+> # no additional information not captured in diet1.0$alcoholdrinkerstatus.20117.0.0
+555c552
+< #table(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.1.0,useNA="always")
+---
+> #table(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0,useNA="always")
+559,560c556,557
+< diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.1.0_bin = as.numeric(ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "No", 0, ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "Yes" | diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "It varies", 1, "NA")))
+< #table(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.1.0_bin,useNA="always")
+---
+> diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0_bin = as.numeric(ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "No", 0, ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "Yes" | diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "It varies", 1, "NA")))
+> #table(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0_bin,useNA="always")
+564,565c561,562
+< diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.1.0_bin2 = as.numeric(ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "No", 0, ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "Yes", 1, "NA")))
+< #table(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.1.0_bin2,useNA="always")
+---
+> diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0_bin2 = as.numeric(ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "No", 0, ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "Yes", 1, "NA")))
+> #table(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0_bin2,useNA="always")
+569c566
+< diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.1.0_QT3 = as.numeric(ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "No", 0, 
+---
+> diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0_QT3 = as.numeric(ifelse(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0 == "No", 0, 
+572c569
+< #table(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.1.0_QT3,useNA="always")
+---
+> #table(diet1.0$alcohol_usuallywithmeals_amongcurrentdrinkers.1618.0.0_QT3,useNA="always")
+585c582
+< #table(diet1.0$nevereatcategories.6144.1.0,useNA="always")
+---
+> #table(diet1.0$nevereatcategories.6144.0.0,useNA="always")
+590c587
+< diet1.0$nevereatcategories.6144.0.combined = paste(diet1.0$nevereatcategories.6144.1.0, diet1.0$nevereatcategories.6144.0.1, diet1.0$nevereatcategories.6144.0.2,
+---
+> diet1.0$nevereatcategories.6144.0.combined = paste(diet1.0$nevereatcategories.6144.0.0, diet1.0$nevereatcategories.6144.0.1, diet1.0$nevereatcategories.6144.0.2,
+596c593
+< diet1.0$nevereatcategories.6144.1.0_bin = as.numeric(
+---
+> diet1.0$nevereatcategories.6144.0.0_bin = as.numeric(
+616c613
+< #table(diet1.0$nevereatcategories.6144.1.0_bin,useNA="always")
+---
+> #table(diet1.0$nevereatcategories.6144.0.0_bin,useNA="always")
+618c615
+< diet1.0$nevereatcategories.6144.1.0_bin2 = as.numeric(
+---
+> diet1.0$nevereatcategories.6144.0.0_bin2 = as.numeric(
+638c635
+< #table(diet1.0$nevereatcategories.6144.1.0_bin2,useNA="always")
+---
+> #table(diet1.0$nevereatcategories.6144.0.0_bin2,useNA="always")
+641c638
+< diet1.0$nevereatcategories.6144.1.0_bin3 = as.numeric(
+---
+> diet1.0$nevereatcategories.6144.0.0_bin3 = as.numeric(
+661c658
+< #table(diet1.0$nevereatcategories.6144.1.0_bin3,useNA="always")
+---
+> #table(diet1.0$nevereatcategories.6144.0.0_bin3,useNA="always")
+665c662
+< diet1.0$nevereatcategories.6144.1.0_bin4 = as.numeric(
+---
+> diet1.0$nevereatcategories.6144.0.0_bin4 = as.numeric(
+685c682
+< #table(diet1.0$nevereatcategories.6144.1.0_bin4,useNA="always")
+---
+> #table(diet1.0$nevereatcategories.6144.0.0_bin4,useNA="always")
+688c685
+< diet1.0$nevereatcategories.6144.1.0_bin5 = as.numeric(
+---
+> diet1.0$nevereatcategories.6144.0.0_bin5 = as.numeric(
+708c705
+< #table(diet1.0$nevereatcategories.6144.1.0_bin5,useNA="always")
+---
+> #table(diet1.0$nevereatcategories.6144.0.0_bin5,useNA="always")
+711c708
+< diet1.0$nevereatcategories.6144.1.0_bin6 = as.numeric(
+---
+> diet1.0$nevereatcategories.6144.0.0_bin6 = as.numeric(
+731c728
+< #table(diet1.0$nevereatcategories.6144.1.0_bin6,useNA="always")
+---
+> #table(diet1.0$nevereatcategories.6144.0.0_bin6,useNA="always")
+734c731
+< diet1.0$nevereatcategories.6144.1.0_bin7 = as.numeric(
+---
+> diet1.0$nevereatcategories.6144.0.0_bin7 = as.numeric(
+754c751
+< #table(diet1.0$nevereatcategories.6144.1.0_bin7,useNA="always")
+---
+> #table(diet1.0$nevereatcategories.6144.0.0_bin7,useNA="always")
+757c754
+< diet1.0$nevereatcategories.6144.1.0_bin8 = as.numeric(
+---
+> diet1.0$nevereatcategories.6144.0.0_bin8 = as.numeric(
+777c774
+< #table(diet1.0$nevereatcategories.6144.1.0_bin8,useNA="always")	
+---
+> #table(diet1.0$nevereatcategories.6144.0.0_bin8,useNA="always")	
+796c793
+< diet1.0$milk_typeused.1418.1.0_bin = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin = as.numeric(
+807c804
+< #table(diet1.0$milk_typeused.1418.1.0_bin,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin,useNA="always")
+810c807
+< diet1.0$milk_typeused.1418.1.0_bin2 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin2 = as.numeric(
+821c818
+< #table(diet1.0$milk_typeused.1418.1.0_bin2,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin2,useNA="always")
+824c821
+< diet1.0$milk_typeused.1418.1.0_QT3 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_QT3 = as.numeric(
+835c832
+< #table(diet1.0$milk_typeused.1418.1.0_QT3,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_QT3,useNA="always")
+838c835
+< diet1.0$milk_typeused.1418.1.0_bin4 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin4 = as.numeric(
+849c846
+< #table(diet1.0$milk_typeused.1418.1.0_bin4,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin4,useNA="always")
+852c849
+< diet1.0$milk_typeused.1418.1.0_bin5 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin5 = as.numeric(
+863c860
+< #table(diet1.0$milk_typeused.1418.1.0_bin5,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin5,useNA="always")
+866c863
+< diet1.0$milk_typeused.1418.1.0_bin6 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin6 = as.numeric(
+877c874
+< #table(diet1.0$milk_typeused.1418.1.0_bin6,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin6,useNA="always")
+880c877
+< diet1.0$milk_typeused.1418.1.0_bin7 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin7 = as.numeric(
+891c888
+< #table(diet1.0$milk_typeused.1418.1.0_bin7,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin7,useNA="always")
+894c891
+< diet1.0$milk_typeused.1418.1.0_bin8 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin8 = as.numeric(
+905c902
+< #table(diet1.0$milk_typeused.1418.1.0_bin8,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin8,useNA="always")
+908c905
+< diet1.0$milk_typeused.1418.1.0_bin9 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin9 = as.numeric(
+919c916
+< #table(diet1.0$milk_typeused.1418.1.0_bin9,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin9,useNA="always")
+922c919
+< diet1.0$milk_typeused.1418.1.0_bin10 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin10 = as.numeric(
+933c930
+< #table(diet1.0$milk_typeused.1418.1.0_bin10,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin10,useNA="always")
+936c933
+< diet1.0$milk_typeused.1418.1.0_bin11 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin11 = as.numeric(
+947c944
+< #table(diet1.0$milk_typeused.1418.1.0_bin11,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin11,useNA="always")
+950c947
+< diet1.0$milk_typeused.1418.1.0_bin12 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin12 = as.numeric(
+961c958
+< #table(diet1.0$milk_typeused.1418.1.0_bin12,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin12,useNA="always")
+964c961
+< diet1.0$milk_typeused.1418.1.0_bin13 = as.numeric(
+---
+> diet1.0$milk_typeused.1418.0.0_bin13 = as.numeric(
+975c972
+< #table(diet1.0$milk_typeused.1418.1.0_bin13,useNA="always")
+---
+> #table(diet1.0$milk_typeused.1418.0.0_bin13,useNA="always")
+1003c1000
+< table(diet1.0$spread_typeused.1428.1.0,diet1.0$nonbutterspread_typeused.2654.1.0)
+---
+> table(diet1.0$spread_typeused.1428.0.0,diet1.0$nonbutterspread_typeused.2654.0.0)
+1006c1003
+< diet1.0$spread_typeused.1428.0.nonbutterspread_typeused.2654.combined = paste(diet1.0$spread_typeused.1428.1.0, diet1.0$nonbutterspread_typeused.2654.1.0, sep =":")
+---
+> diet1.0$spread_typeused.1428.0.nonbutterspread_typeused.2654.combined = paste(diet1.0$spread_typeused.1428.0.0, diet1.0$nonbutterspread_typeused.2654.0.0, sep =":")
+1220c1217
+< diet1.0$spread_typeused.1428.0.nonbutterspread_typeused.2654.combined_bin7 = flas.numeric(
+---
+> diet1.0$spread_typeused.1428.0.nonbutterspread_typeused.2654.combined_bin7 = as.numeric(
+1599c1596
+< #table(diet1.0$bread_typeused.1448.1.0,useNA="always")
+---
+> #table(diet1.0$bread_typeused.1448.0.0,useNA="always")
+1602c1599
+< diet1.0$bread_typeused.1448.1.0_bin = as.numeric(
+---
+> diet1.0$bread_typeused.1448.0.0_bin = as.numeric(
+1611c1608
+< #table(diet1.0$bread_typeused.1448.1.0_bin,useNA="always")
+---
+> #table(diet1.0$bread_typeused.1448.0.0_bin,useNA="always")
+1614c1611
+< diet1.0$bread_typeused.1448.1.0_bin2 = as.numeric(
+---
+> diet1.0$bread_typeused.1448.0.0_bin2 = as.numeric(
+1623c1620
+< #table(diet1.0$bread_typeused.1448.1.0_bin2,useNA="always")
+---
+> #table(diet1.0$bread_typeused.1448.0.0_bin2,useNA="always")
+1626c1623
+< diet1.0$bread_typeused.1448.1.0_bin3 = as.numeric(
+---
+> diet1.0$bread_typeused.1448.0.0_bin3 = as.numeric(
+1635c1632
+< #table(diet1.0$bread_typeused.1448.1.0_bin3,useNA="always")
+---
+> #table(diet1.0$bread_typeused.1448.0.0_bin3,useNA="always")
+1638c1635
+< diet1.0$bread_typeused.1448.1.0_bin4 = as.numeric(
+---
+> diet1.0$bread_typeused.1448.0.0_bin4 = as.numeric(
+1647c1644
+< #table(diet1.0$bread_typeused.1448.1.0_bin4,useNA="always")
+---
+> #table(diet1.0$bread_typeused.1448.0.0_bin4,useNA="always")
+1650c1647
+< diet1.0$bread_typeused.1448.1.0_bin5 = as.numeric(
+---
+> diet1.0$bread_typeused.1448.0.0_bin5 = as.numeric(
+1659c1656
+< #table(diet1.0$bread_typeused.1448.1.0_bin5,useNA="always")
+---
+> #table(diet1.0$bread_typeused.1448.0.0_bin5,useNA="always")
+1675c1672
+< #table(diet1.0$cereal_typeused.1468.1.0,useNA="always")
+---
+> #table(diet1.0$cereal_typeused.1468.0.0,useNA="always")
+1678c1675
+< diet1.0$cereal_typeused.1468.1.0_bin = as.numeric(
+---
+> diet1.0$cereal_typeused.1468.0.0_bin = as.numeric(
+1688c1685
+< #table(diet1.0$cereal_typeused.1468.1.0_bin,useNA="always")
+---
+> #table(diet1.0$cereal_typeused.1468.0.0_bin,useNA="always")
+1691c1688
+< diet1.0$cereal_typeused.1468.1.0_bin2 = as.numeric(
+---
+> diet1.0$cereal_typeused.1468.0.0_bin2 = as.numeric(
+1701c1698
+< #table(diet1.0$cereal_typeused.1468.1.0_bin2,useNA="always")
+---
+> #table(diet1.0$cereal_typeused.1468.0.0_bin2,useNA="always")
+1704c1701
+< diet1.0$cereal_typeused.1468.1.0_bin3 = as.numeric(
+---
+> diet1.0$cereal_typeused.1468.0.0_bin3 = as.numeric(
+1714c1711
+< #table(diet1.0$cereal_typeused.1468.1.0_bin3,useNA="always")
+---
+> #table(diet1.0$cereal_typeused.1468.0.0_bin3,useNA="always")
+1717c1714
+< diet1.0$cereal_typeused.1468.1.0_bin4 = as.numeric(
+---
+> diet1.0$cereal_typeused.1468.0.0_bin4 = as.numeric(
+1727c1724
+< #table(diet1.0$cereal_typeused.1468.1.0_bin4,useNA="always")
+---
+> #table(diet1.0$cereal_typeused.1468.0.0_bin4,useNA="always")
+1730c1727
+< diet1.0$cereal_typeused.1468.1.0_bin5 = as.numeric(
+---
+> diet1.0$cereal_typeused.1468.0.0_bin5 = as.numeric(
+1740c1737
+< #table(diet1.0$cereal_typeused.1468.1.0_bin5,useNA="always")
+---
+> #table(diet1.0$cereal_typeused.1468.0.0_bin5,useNA="always")
+1755c1752
+< #table(diet1.0$coffee_typeused.1508.1.0,useNA="always")
+---
+> #table(diet1.0$coffee_typeused.1508.0.0,useNA="always")
+1758c1755
+< diet1.0$coffee_typeused.1508.1.0_bin = as.numeric(
+---
+> diet1.0$coffee_typeused.1508.0.0_bin = as.numeric(
+1767c1764
+< #table(diet1.0$coffee_typeused.1508.1.0_bin,useNA="always")
+---
+> #table(diet1.0$coffee_typeused.1508.0.0_bin,useNA="always")
+1769,1770c1766,1767
+< # instant vs. other
+< diet1.0$coffee_typeused.1508.1.0_bin2 = as.numeric(
+---
+> # instant_ground vs. other
+> diet1.0$coffee_typeused.1508.0.0_bin2 = as.numeric(
+1779c1776
+< #table(diet1.0$coffee_typeused.1508.1.0_bin2,useNA="always")
+---
+> #table(diet1.0$coffee_typeused.1508.0.0_bin2,useNA="always")
+1782c1779
+< diet1.0$coffee_typeused.1508.1.0_bin3 = as.numeric(
+---
+> diet1.0$coffee_typeused.1508.0.0_bin3 = as.numeric(
+1791c1788
+< #table(diet1.0$coffee_typeused.1508.1.0_bin3,useNA="always")
+---
+> #table(diet1.0$coffee_typeused.1508.0.0_bin3,useNA="always")

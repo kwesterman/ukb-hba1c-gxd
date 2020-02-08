@@ -1,6 +1,5 @@
 # Data and R files
 data/*
-int/*
 cache/*
 env/*
 opt/*
@@ -8,6 +7,9 @@ output/*
 *.RData
 *.rds
 *.Rhistory
+
+# Results (for now)
+results/*
 
 # LaTeX helper files
 *.sty

@@ -1,0 +1,186 @@
+---
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+title: "Results QC for UKB gene-diet interaction analysis"
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo=F, message=F, warning=F, fig.path="../results/figures/")
+suppressMessages(silent <- lapply(
+  c("knitr", "kableExtra", "tidyverse", "broom", "cowplot"), 
+  library, character.only=T))
+```
+
+```{r prep}
+make_qqplot_with_gc <- function(p_vec, title_text="", thin=T) {
+  p_vec <- sort(p_vec[!is.na(p_vec)])
+  gc <- gControl(p_vec)
+  plot_title <- paste0(title_text, "\n(lambda = ", round(gc, 2), ")")
+  qq_df <- tibble(x=-log10(1:length(p_vec) / length(p_vec)),
+                  y=-log10(p_vec))
+  if (thin) qq_df <- qq_df[-sample(which(p_vec > 0.05),  # Thin variants w/ p > 0.05
+                                   size=round(sum(p_vec > 0.05) * 0.99)), ]
+    # slice(-sample(which(.$y < 1), size=round(sum(.$y < 1) * 0.9)))  
+  ggplot(qq_df, aes(x=x, y=y)) +
+    geom_point() +
+    geom_abline(slope=1, color="red") +
+    labs(x="Expected (-logP)", y="Observed (-logP)", title=plot_title)
+}
+
+gControl <- function(p_vals) {
+  # See van Iterson 2017 methods and/or Lehne 2015 code for details on genomic control for EWAS
+  # Below is modeled after Lehne 2015
+  lambda <- median(qchisq(p_vals, df=1, lower.tail=F), 
+                   na.rm=T) / qchisq(0.5, df=1)
+  round(lambda, 2)
+}
+```
+
+# Initial run: FFQ PC1 -> HbA1c, chr. 22 only
+
+## Full chr. 22 results (robust + fully-adjusted)
+
+Model: HbA1c ~ SNP + ffq_PC1 + SNP*ffq_PC1 + PCs + age + sex + genotyping array + birthplace + assessment center; 40 covariates in total including the many dummy variables for birthplace and assessment center
+
+```{r load-chr22}
+chr22_mfi <- read_tsv("../data/processed/ukb_mfi_chr22_v3.txt", 
+                      col_names=c("locID", "rsID", "pos", "ref", "alt", "maf", "idk", "info")) %>%
+  select(rsID, maf, info)
+
+chr22_res_all <- read_tsv("../data/processed/chr22_out_res") %>%
+  left_join(chr22_mfi, by="rsID")
+
+chr22_robust_test <- read_tsv("../data/processed/20191210_robust") %>%
+  left_join(chr22_mfi, by="rsID")
+
+chr22_minimal_test <- read_tsv("../data/processed/20191210_minimal") %>%
+  left_join(chr22_mfi, by="rsID")
+```
+
+```{r chr22-res, warning=F}
+table(factor(chr22_res_all$maf > 0.01, labels=c("MAF <= 0.01", "MAF > 0.01")), 
+      factor(chr22_res_all$info > 0.3, labels=c("INFO <= 0.3", "INFO > 0.3")))
+
+maf_plt <- chr22_res_all %>%
+  mutate(maf_group=cut(maf, breaks=seq(0, 0.5, by=0.1), include.lowest=T)) %>%
+  group_by(maf_group) %>%
+  summarise(lambda=gControl(P_Value_Interaction)) %>%
+  ggplot(aes(x=maf_group, y=lambda)) +
+  geom_bar(stat="identity") +
+  labs(title="Genomic inflation vs. MAF")
+info_plt <- chr22_res_all %>%
+  mutate(info_group=cut(info, breaks=seq(0, 1, by=0.2), include.lowest=T)) %>%
+  group_by(info_group) %>%
+  summarise(lambda=gControl(P_Value_Interaction)) %>%
+  ggplot(aes(x=info_group, y=lambda)) +
+  geom_bar(stat="identity") +
+  labs(title="Genomic inflation vs. INFO score")
+plot_grid(maf_plt, info_plt)
+  
+plot_grid(
+  make_qqplot_with_gc(chr22_res_all$P_Value_Interaction[chr22_res_all$maf > 0.01], 
+                      "1-DF, MAF > 1%"),
+  make_qqplot_with_gc(chr22_res_all$P_Value_Interaction[chr22_res_all$maf <= 0.01], 
+                      "1-DF, MAF <= 1%"),
+  make_qqplot_with_gc(chr22_res_all$P_Value_Interaction[chr22_res_all$maf > 0.01 & chr22_res_all$info > 0.3], 
+                      "1-DF, MAF > 1% and INFO > 0.3"),
+  make_qqplot_with_gc(chr22_res_all$P_Value_Interaction[chr22_res_all$maf > 0.01 & chr22_res_all$info <= 0.3], 
+                      "1-DF, MAF > 1% and INFO <= 0.3", thin=F),
+  nrow=2
+)
+
+chr22_res <- filter(chr22_res_all, maf > 0.01, info > 0.3)
+make_qqplot_with_gc(chr22_res$P_Value_Interaction, "1-DF, MAF > 1%, INFO > 0.3 (This filter will be used from here)")
+
+make_qqplot_with_gc(chr22_res$P_Value_Joint, "2-DF, filtered")
+make_qqplot_with_gc(chr22_res$P_Value_Main, "Main-effect, filtered")
+```
+
+```{r manhattan}
+qqman::manhattan(chr22_res,
+                 chr="CHR", bp="POS", p="P_Value_Interaction", 
+                 main="Chr. 22 manhattan plot (1-DF)")
+
+qqman::manhattan(chr22_res,
+                 chr="CHR", bp="POS", p="P_Value_Joint", 
+                 main="Chr. 22 manhattan plot (2-DF)")
+
+chr22_res_noGW <- filter(chr22_res,
+                         POS < 37066896 - 500000 | POS > 37066896 + 500000,
+                         POS < 43115519 - 500000 | POS > 43115519 + 500000,
+                         POS < 30254175 - 500000 | POS > 30254175 + 500000,
+                         POS < 32481996 - 500000 | POS > 32481996 + 500000,
+                         POS < 30877081 - 500000 | POS > 30877081 + 500000,
+                         POS < 19967980 - 500000 | POS > 19967980 + 500000)
+
+qqman::manhattan(chr22_res_noGW,
+                 chr="CHR", bp="POS", p="P_Value_Joint", 
+                 main="Chr. 22 manhattan plot (2-DF) w/out 6 genome-wide loci")
+
+chr22_res <- chr22_res %>%
+  mutate(joint_chisq=Beta_Interaction_1 ** 2 / Var_Beta_Interaction_1_1 + 
+           Beta_Main ** 2 / Var_Beta_Main)
+chr22_res_noGW <- chr22_res_noGW %>%
+  mutate(joint_chisq=Beta_Interaction_1 ** 2 / Var_Beta_Interaction_1_1 + 
+           Beta_Main ** 2 / Var_Beta_Main)
+
+obs_chisq <- median(chr22_res$joint_chisq)
+obs_chisq_noGW <- median(chr22_res_noGW$joint_chisq)
+exp_chisq <- qchisq(0.5, 2)
+```
+
+Prior to removal of 6 genome-wide significant loci, genomic control lambda = `r round(gControl(chr22_res$P_Value_Joint), 2)` (calculated from p-values) and the ratio of observed to expected median 2-DF Chi-square statistics is `r round(obs_chisq / exp_chisq, 2)`.
+After removal of 6 genome-wide significant loci, genomic control lambda = `r round(gControl(chr22_res_noGW$P_Value_Joint), 2)` (calculated from p-values) and the ratio of observed to expected median 2-DF Chi-square statistics is `r round(obs_chisq_noGW / exp_chisq, 2)`.
+It does 
+
+```{r output-for-ldsc}
+chr22_res %>%
+  filter(maf > 0.01, info > 0.9) %>%
+  select(rsID, Allele1, Allele2, Beta_Interaction_1, P_Value_Interaction) %>%
+  write_tsv("../data/processed/ldsc_input_1DF")
+
+chr22_res %>%
+  filter(maf > 0.01, info > 0.9) %>%
+  select(rsID, Allele1, Allele2, Beta_Interaction_1, P_Value_Joint) %>%
+  write_tsv("../data/processed/ldsc_input_2DF")
+
+chr22_res %>%
+  filter(maf > 0.01, info > 0.9) %>%
+  select(rsID, Allele1, Allele2, Beta_Main, P_Value_Main) %>%
+  write_tsv("../data/processed/ldsc_input_Main")
+```
+
+## Takeaways/questions
+
+* Inflation and odd Q-Q plot behavior is definitely helped by the MAF filter (and by robust standard errors, not shown here).
+* Is there any nuance needed for interpretation of genomic inflation or QQ plots for 2-DF tests? (Couldn't find anything on a quick search but can look more in-depth). Could this be related to the observed inflation of lambda ~ 1.4?
+
+<!--
+## Sensitivity tests/exploration
+
+These specific results are on a 5k-variant subset of chr. 22, using the filters above (MAF > 1% and INFO > 0.3).
+
+* Robust: the standard model (HbA1c ~ SNP + ffq_PC1 + SNP*ffq_PC1 + PCs + age + sex + genotyping array + birthplace + assessment center; 40 covariates in total including the many dummy variables for birthplace and assessment center)
+* Non-robust: same model as above, but without robust standard errors
+* Minimal: same model as robust, but without adjustment for birthplace or assessment center
+
+```{r test, eval=F}
+robust <- read_tsv("../data/processed/test_outputs/chr22_out_res_robust") %>%
+  left_join(chr22_mfi, by="rsID") %>%
+  filter(maf > 0.01, info > 0.3)
+nonrobust <- read_tsv("../data/processed/test_outputs/chr22_out_res_nonrobust") %>%
+  left_join(chr22_mfi, by="rsID") %>%
+  filter(maf > 0.01, info > 0.3)
+minimal <- read_tsv("../data/processed/test_outputs/chr22_out_res_minimal") %>%
+  left_join(chr22_mfi, by="rsID") %>%
+  filter(maf > 0.01, info > 0.3)
+
+make_qqplot_with_gc(gC, "Robust SEs, 1-DF")
+make_qqplot_with_gc(robust$P_Value_Joint, "Robust SEs, 2-DF")
+make_qqplot_with_gc(nonrobust$P_Value_Interaction, "Non-robust SEs,  1-DF")
+make_qqplot_with_gc(nonrobust$P_Value_Joint, "Non-robust SEs, 2-DF")
+make_qqplot_with_gc(minimal$P_Value_Interaction, "No center/birthplace adjustment, 1-DF")
+make_qqplot_with_gc(minimal$P_Value_Joint,  "No center/birthplace adjustment, 2-DF")
+```
+-->

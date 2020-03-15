@@ -6,7 +6,7 @@ title: "Phenotype QC for UKB gene-diet interaction analysis"
 ---
 
 ```{r setup, include=F}
-knitr::opts_chunk$set(echo=F, message=F,warning=F, fig.path="../results/figures/")
+knitr::opts_chunk$set(echo=F, message=F,warning=F, fig.path="../output/figures/")
 suppressMessages(silent <- lapply(
   c("knitr", "kableExtra", "tidyverse", "cowplot", "jtools"), 
   library, character.only=T))
@@ -16,42 +16,28 @@ suppressMessages(silent <- lapply(
 INT <- function(x) qnorm((rank(x, na.last="keep") - 0.5) / sum(!is.na(x)))
 ```
 
-
 ```{r read-phenos}
 raw_phenos <- read_csv("../data/processed/ukbb_diet_gwis_phenos_raw.csv")
 phenos <- read_csv("../data/processed/ukbb_diet_gwis_phenos.csv")
 ```
 
-```{r additional-variables, eval=F}
-acbpAdj_lm <- lm(hba1c ~ assessment_centre + birthplace, data=raw_phenos,
-                 na.action=na.exclude)
-phenos_expanded <- phenos %>%
-  mutate(ffq_median_PC1_INT=INT(ffq_median_PC1),
-         hba1c_acbpResid_INT=INT(resid(acbpAdj_lm)))
-write_csv(phenos_expanded, "../data/processed/ukbb_diet_gwis_phenos_expanded.csv")
-```
-
-All data shown below are from unrelated, European-ancestry individuals in UK Biobank who have not revoked consent for analysis (N ~ 350k).
+All data shown below are from unrelated, European-ancestry individuals in UK Biobank who have not revoked consent for analysis (N ~ 350k). HbA1c distributions then removed individuals with confirmed diabetes (T1D or T2D based on Florez project "prob_poss_..." definitions) and outliers (outside of 3 IQRs from the 25th/75th percentiles) unless otherwise noted.
 
 ```{r distributions}
-hba1c_hist <- ggplot(raw_phenos, aes(x=hba1c)) + 
+hba1c_hist <- ggplot(phenos, aes(x=hba1c_raw)) + 
   geom_histogram() +
   labs(title="HbA1c raw")
-hba1c_INT_hist <- ggplot(phenos, aes(x=hba1c)) +
+hba1c_INT_hist <- ggplot(phenos, aes(x=hba1c_INT)) +
   geom_histogram() +
   labs(title="HbA1c (INT)")
 plot_grid(hba1c_hist, hba1c_INT_hist)
 
-ggplot(phenos, aes(x=ffq_median_PC1)) + 
-  geom_histogram() +
-  labs(title="First FFQ PC")
-
-ffq_pc_plts <- lapply(1:4, function(i) {
-  ggplot(phenos, aes_string(x=paste0("ffq_median_PC", i))) +
+top4_ffq_pc_plts <- lapply(1:4, function(i) {
+  ggplot(phenos, aes_string(x=paste0("ffq_PC", i))) +
     geom_histogram() +
-    labs(title=paste0("FFQ PC", i), x="")
+    labs(title=paste0("FFQ-PC", i), x="")
 })
-do.call(plot_grid, ffq_pc_plts)
+do.call(plot_grid, top4_ffq_pc_plts)
 
 ggplot(raw_phenos, aes(x=sex)) +
   geom_bar()
@@ -73,32 +59,43 @@ ggplot(raw_phenos, aes(x=fct_rev(birthplace))) +
 ## Are potential confounders (birthplace, assessment center) associated with HbA1c?
 
 ```{r hba1c-associations}
-hba1c_ac_lm <- lm(hba1c ~ assessment_centre, data=raw_phenos)
-hba1cINT_ac_lm <- lm(INT(hba1c) ~ assessment_centre, data=raw_phenos)
-plot_summs(hba1c_ac_lm, hba1cINT_ac_lm,
-           model.names=c("Raw", "INT"))
+hba1c_ac_lm <- lm(hba1c_raw ~ assessment_centre, 
+                  data=filter(raw_phenos, !(t1d | t2d)))
+plot_summs(hba1c_ac_lm)
 
-hba1c_bp_lm <- lm(hba1c ~ birthplace, data=raw_phenos)
-hba1cINT_bp_lm <- lm(INT(hba1c) ~ birthplace, data=raw_phenos)
-plot_summs(hba1c_bp_lm, hba1cINT_bp_lm,
-           model.names=c("Raw", "INT"))
+hba1c_bp_lm <- lm(hba1c_raw ~ birthplace, 
+                  data=filter(raw_phenos, !(t1d | t2d)))
+plot_summs(hba1c_bp_lm)
 
 pc_string <- paste0("PC", 1:10, collapse=" + ")
-hba1c_pcs_lm <- lm(as.formula(paste0("hba1c ~ ", pc_string)), data=raw_phenos)
-hba1cINT_pcs_lm <- lm(as.formula(paste0("INT(hba1c) ~ ", pc_string)), data=raw_phenos)
-plot_summs(hba1c_pcs_lm, hba1cINT_pcs_lm,
-           model.names=c("Raw", "INT"))
+hba1c_pcs_lm <- lm(as.formula(paste0("hba1c_raw ~ ", pc_string)), data=raw_phenos)
+plot_summs(hba1c_pcs_lm)
 
-mydf <- raw_phenos %>% select(hba1c, sex, age) %>% mutate(age_squared=age**2)
-hba1c_basic_lm <- lm(hba1c ~ age + sex + age_squared, data=mydf)
-hba1cINT_basic_lm <- lm(INT(hba1c) ~ age + sex + age_squared, data=mydf)
-plot_summs(hba1c_basic_lm, hba1cINT_basic_lm,
-           model.names=c("Raw", "INT"))
+hba1c_basic_lm <- lm(hba1c_raw ~ age + sex + age_squared, data=raw_phenos)
+plot_summs(hba1c_basic_lm)
 
 all_covar_string <- paste0(pc_string, " + assessment_centre + birthplace")
-hba1c_all_lm <- lm(as.formula(paste0("hba1c ~ ", all_covar_string)), data=raw_phenos)
-hba1cINT_all_lm <- lm(as.formula(paste0("INT(hba1c) ~ ", all_covar_string)), data=raw_phenos)
-plot_summs(hba1c_all_lm, hba1cINT_all_lm,
-           model.names=c("Raw", "INT"))
+hba1c_all_lm <- lm(as.formula(paste0("hba1c_raw ~ ", all_covar_string)), data=raw_phenos)
+plot_summs(hba1c_all_lm)
 ```
 
+## Histograms for the full set of 39 FFQ-PCs
+
+```{r all-ffq-pc-histograms}
+all_ffq_PCs <- grep("ffq_PC", names(phenos), value=T)
+ffq_pc_plts <- lapply(all_ffq_PCs, function(pc) {
+  ggplot(phenos, aes_string(x=pc)) +
+    geom_histogram() +
+    labs(title=gsub("ffq_PC_", "FFQ-PC ", pc), x="")
+})
+for (plt in ffq_pc_plts) print(plt)
+```
+
+```{r additional-variables, eval=F}
+acbpAdj_lm <- lm(hba1c_raw ~ assessment_centre + birthplace, data=raw_phenos,
+                 na.action=na.exclude)
+phenos_expanded <- phenos %>%
+  mutate(ffq_median_PC1_INT=INT(ffq_PC1),
+         hba1c_acbpResid_INT=INT(resid(acbpAdj_lm)))
+write_csv(phenos_expanded, "../data/processed/ukbb_diet_gwis_phenos_expanded.csv")
+```

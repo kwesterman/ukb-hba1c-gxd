@@ -3,6 +3,7 @@ data/*
 cache/*
 env/*
 opt/*
+doc/*
 output/*
 *.RData
 *.rds

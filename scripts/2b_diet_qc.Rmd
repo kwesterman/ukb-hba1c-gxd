@@ -1,0 +1,195 @@
+---
+output: 
+  pdf_document
+title: "Dietary trait QC for UKB gene-diet interaction analysis"
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo=F, message=F,warning=F, 
+                      fig.path="../output/figures/2b_diet_qc/")
+suppressMessages(silent <- lapply(
+  c("knitr", "kableExtra", "tidyverse", "cowplot", 
+    "pheatmap", "RColorBrewer"), 
+  library, character.only=T))
+```
+
+```{r load-data}
+diet_input <- read_tsv("../data/processed/final_baseline_ffq_data.txt")
+
+kw_pca <- readRDS("../data/processed/ffq_pca_fit.rds")
+kw_pca_jbcFields <- readRDS("../data/processed/ffq_pca_fit_jbcFields.rds")
+
+kwPCs <- read_tsv("../data/processed/ffq_PCs.txt")
+jcPCs <- read_tsv("../data/processed/JBC_BOLT_UKB_diet_genoQCEUR450K_170FFQphenotypes_agesexadj_INV") %>%
+  rename_all(~gsub("median_", "", .)) %>%
+  select(id=IID, everything(), -FID)
+
+diet_BL <- read_tsv("../data/processed/diet_baseline.txt")
+```
+
+# Input dietary variables
+
+* These correlations are based on the final PCA input dataset (i.e. after INT and median imputation)
+
+```{r ffq-trait-correlations, fig.asp=1}
+diet_input_corrs <- cor(select(diet_input, -id, -sex, -age_months),
+                        use="pairwise.complete.obs")
+diet_input_corrs[is.na(diet_input_corrs)] <- 0  # Deals with milk QT vs. binary trait issue
+rownames(diet_input_corrs) <- strtrim(rownames(diet_input_corrs), 15)
+colnames(diet_input_corrs) <- strtrim(colnames(diet_input_corrs), 25)
+pheatmap(
+  diet_input_corrs,
+  breaks=seq(-max(abs(diet_input_corrs)), max(abs(diet_input_corrs)), 
+             length.out=100),
+  treeheight_row=0, treeheight_col=0,
+  angle_col=90,
+  main="Pearson correlations between dietary traits"
+)
+```
+
+\newpage
+
+# Dietary PCs
+
+```{r loadings}
+kw_loadings <- kw_pca$rotation
+rownames(kw_loadings) <- strtrim(rownames(kw_loadings), 15)
+pheatmap(
+  kw_loadings,
+  breaks=seq(-max(abs(kw_loadings)), max(abs(kw_loadings)), length.out=100),
+  cluster_rows=F, cluster_cols=F,
+  angle_col=45,
+  main="Dietary principal component loadings"
+)
+```
+
+\newpage
+
+# Comparison of KW and JC PCs
+
+* Differences may have arisen due to any of the following changes:
+    - Sample inclusion:
+        + Only unrelated Europeans
+        + Inclusion of disease & pregnancy
+    - Baseline FFQ responses only
+    - Alcohol imputation -- JC imputed values in {-1, -3} as the median of the full set of non-missing values, versus KW as the median of the values not in {-1, -3}
+    - No residualizing on age + sex
+    - Trimming to a much smaller set of binary variables to reduce heavy collinearity
+
+```{r compare-PCs}
+combined <- jcPCs %>%
+  select(id, paste0("ffq_PC", 1:5)) %>%
+  setNames(c("id", paste0("ffq_PC", 1:5, ".JBC"))) %>%
+  inner_join(kwPCs, by="id") %>%
+  setNames(gsub("ffq_", "", names(.)))
+
+pc_corrs <- cor(select(combined, -id))
+pc_corrs <- pc_corrs[grepl("JBC", rownames(pc_corrs)),
+                     !grepl("JBC", colnames(pc_corrs))]
+
+pheatmap(
+  pc_corrs,
+  breaks=seq(-max(abs(pc_corrs)), max(abs(pc_corrs)), length.out=100),
+  cluster_rows=F, cluster_cols=F,
+  angle_col=45,
+  main="Correlations with top 5 JBC dietary PCs"
+)
+
+# kw_pca_fit <- readRDS("../data/processed/ffq_pca_fit_jbcFields.rds")
+# load("/humgen/diabetes2/users/jcole/UKBB/diet/ffq_median.pca_11212018update.Rdata")
+# jc_pca_fit <- ffq_median.pca
+# 
+# plot(x=kw_pca_fit$rot[, 25], y=jc_pca_fit$rot[, 25],
+#      xlab="KW loadings", ylab="JC loadings",
+#      main="Comparison of PC25 loadings")
+# text(x=kw_pca_fit$rot[, 25], y=jc_pca_fit$rot[, 25],
+#      labels=rownames(kw_pca_fit$rot),
+#      cex=0.3)
+```
+
+\newpage
+
+# Rough QC of KW preprocessing based on missingness
+
+* Uses the "raw" dietary dataset (i.e. missingness calculated prior to imputation)
+
+```{r check-missingness}
+pca_fields <- c(
+  "id",
+  "selfreportsex.31",
+  "age_months",
+  "cookedveg_TBSperday.1289_QT",
+  "rawveg_TBSperday.1299_QT",
+  "freshfruit_piecesperday.1309_QT",
+  "driedfruit_piecesperday.1319_QT",
+  "bread_slicesperweek.1438_QT",
+  "cereal_bowlsperweek.1458_QT",
+  "tea_cupsperday.1488_QT",
+  "coffee_cupsperday.1498_QT",
+  "water_glassesperday.1528_QT",
+  "anyalcohol_glassespermonth.derived_QT",
+  "oilyfish_overallfreq.1329_QT",
+  "nonoilyfish_overallfreq.1339_QT",
+  "processmeat_overallfreq.1349_QT",
+  "poultry_overallfreq.1359_QT",
+  "beef_overallfreq.1369_QT",
+  "lambmutton_overallfreq.1379_QT",
+  "pork_overallfreq.1389_QT",
+  "cheese_overallfreq.1408_QT",
+  "doyouaddsalt.1478_QT",
+  "hotdrinktemp.1518_QT",
+  "milk_typeused.1418_QT14",
+  "nevereatcategories.6144_bin2",
+  "nevereatcategories.6144_bin4",
+  "nevereatcategories.6144_bin6",
+  "nevereatcategories.6144_bin8",
+  "milk_typeused.1418_bin",
+  "spread_typeused.1428.0.nonbutterspread_typeused.2654.combined_bin7",
+  "bread_typeused.1448_bin4",
+  "cereal_typeused.1468_bin5",
+  "coffee_typeused.1508_bin3"
+)
+
+missing_tbl <- lapply(pca_fields, function(f) round(sum(!is.na(diet_BL[[f]])) / nrow(diet_BL), 2))
+names(missing_tbl) <- pca_fields
+# saveRDS(missing_tbl, "../data/processed/sanity_check_fields.rds")
+# missing_tbl <- readRDS("../data/processed/sanity_check_fields.rds")
+kw_missingness <- tibble(trait=names(missing_tbl), frac=unlist(missing_tbl))
+
+jc_missing_tbl <- read_tsv("../data/raw/UKB_diet_SampleSizeByTrait.txt")
+jc_missingness <- tibble(trait=jc_missing_tbl$trait, 
+                         frac=round(jc_missing_tbl$N / 449210, 2))
+jc_missingness2 <- mutate(jc_missingness, trait=gsub("\\.average", "", trait))
+
+compare_df <- full_join(kw_missingness, jc_missingness2, 
+                        by="trait", suffix=c("_kw", "_jc")) %>%
+  filter(!is.na(frac_kw),
+         grepl("_QT|_bin", trait))
+
+kable(compare_df, longtable=T,
+      caption="Fractions non-missing in KW vs. JC diet traits")
+```
+
+\newpage
+
+# Histograms for each trait (prior to median imputation & INT)
+
+```{r histograms}
+plt_df <- mutate_at(diet_BL, vars(contains("_bin")), 
+                    function(x) as.factor(ifelse(is.na(x), NA, round(x, 2))))
+histograms <- lapply(names(plt_df)[-1], function(nm) {
+  pct_nonmissing <- round(sum(!is.na(plt_df[[nm]])) / nrow(plt_df) * 100, 1)
+  string_nonmissing <- paste0(nm, " (", pct_nonmissing, "% non-missing)")
+  if (grepl("_bin|sex", nm)) {
+    ggplot(plt_df, aes_string(x=nm)) +
+      geom_bar(stat="count") +
+      labs(x=string_nonmissing)
+  } else {
+    ggplot(plt_df, aes_string(x=nm)) +
+      geom_histogram() +
+      labs(x=string_nonmissing)
+  }
+})
+
+silent <- lapply(histograms, print)
+```

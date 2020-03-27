@@ -51,6 +51,16 @@ pheatmap(
 
 # Dietary PCs
 
+```{r scree}
+qplot(x=1:30,
+      y=kw_pca$sdev ** 2 / sum(kw_pca$sdev ** 2) * 100) +
+  geom_line() + 
+  scale_x_continuous(breaks=c(1, seq(5, 30, 5))) +
+  labs(x="PC", y="% variance explained",
+       title="Scree plot for dPCs")
+```
+
+
 ```{r loadings}
 kw_loadings <- kw_pca$rotation
 rownames(kw_loadings) <- strtrim(rownames(kw_loadings), 15)

@@ -53,20 +53,20 @@ gwis_model_phenos <- model.matrix(
 # HbA1c-specific processing
 INT <- function(x) qnorm((rank(x, na.last="keep") - 0.5) / sum(!is.na(x)))
 gwis_model_phenos <- gwis_model_phenos %>%
-  mutate(hba1c_raw=ifelse(.$t1d %in% c(F, NA) & .$t2d %in% c(F, NA),
+  mutate(hba1c=ifelse(.$t1d %in% c(F, NA) & .$t2d %in% c(F, NA),
                           hba1c_1, NA),  # Remove those with confirmed diabetes
-         hba1c_raw=ifelse(  # Remove outliers (outside of 3 IQRs from 25th/75th percentiles)
-           findInterval(hba1c_raw, quantile(hba1c_raw, c(0.25, 0.75), na.rm=T) + 
-                          3 * c(-1, 1) * IQR(hba1c_raw, na.rm=T)) == 1,
-           hba1c_raw, NA
+         hba1c=ifelse(  # Remove outliers (outside of 3 IQRs from 25th/75th percentiles)
+           findInterval(hba1c, quantile(hba1c, c(0.25, 0.75), na.rm=T) + 
+                          3 * c(-1, 1) * IQR(hba1c, na.rm=T)) == 1,
+           hba1c, NA
          ),
-         hba1c_INT=INT(hba1c_raw),
-         hba1c_log=log(hba1c_raw),
+         hba1c_INT=INT(hba1c),
+         hba1c_log=log(hba1c),
          hba1c_withDM=hba1c_1)
 
 # Create FFQ-PC-based "environmental risk score"
 keep_PCs <- grep("ffq_PC", names(gwis_model_phenos), value=T)
-lm_formula <- as.formula(paste0("hba1c_raw ~ ", paste(keep_PCs, collapse=" + ")))
+lm_formula <- as.formula(paste0("hba1c ~ ", paste(keep_PCs, collapse=" + ")))
 lm_fit <- lm(lm_formula, data=gwis_model_phenos)  # Linear model predicting HbA1c from all relevant FFQ-PCs
 saveRDS(lm_fit, "../data/processed/ERS_lm_fit.rds")
 gwis_model_phenos$ffq_PC_ERS <- predict(lm_fit, newdata=gwis_model_phenos)  # Generate ERS for each individual (including individuals w/ DM)

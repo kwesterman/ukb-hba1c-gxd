@@ -28,7 +28,7 @@ hba1c_raw_hist <- ggplot(raw_phenos, aes(x=hba1c_1)) +
   geom_histogram() +
   labs(title="HbA1c (raw)") +
   theme(axis.title=element_blank())
-hba1c_hist <- ggplot(phenos, aes(x=hba1c_raw)) +
+hba1c_hist <- ggplot(phenos, aes(x=hba1c)) +
   geom_histogram() +
   labs(title="HbA1c (no DM, + outlier filter)") +
   theme(axis.title=element_blank())
@@ -64,21 +64,21 @@ ggplot(raw_phenos, aes(x=fct_rev(birthplace))) +
 lm_df <- phenos %>%  # Retrieves assessment centre and birthplace with their original factor codings
   left_join(select(raw_phenos, id, assessment_centre, birthplace), by="id")
 
-hba1c_ac_lm <- lm(hba1c_raw ~ assessment_centre, data=lm_df)
+hba1c_ac_lm <- lm(hba1c ~ assessment_centre, data=lm_df)
 plot_summs(hba1c_ac_lm)
 
-hba1c_bp_lm <- lm(hba1c_raw ~ birthplace, data=lm_df)
+hba1c_bp_lm <- lm(hba1c ~ birthplace, data=lm_df)
 plot_summs(hba1c_bp_lm)
 
 pc_string <- paste0("PC", 1:10, collapse=" + ")
-hba1c_pcs_lm <- lm(as.formula(paste0("hba1c_raw ~ ", pc_string)), data=lm_df)
+hba1c_pcs_lm <- lm(as.formula(paste0("hba1c ~ ", pc_string)), data=lm_df)
 plot_summs(hba1c_pcs_lm)
 
-hba1c_basic_lm <- lm(hba1c_raw ~ age + sex + age_squared, data=lm_df)
+hba1c_basic_lm <- lm(hba1c ~ age + sex + age_squared, data=lm_df)
 plot_summs(hba1c_basic_lm)
 
 all_covar_string <- paste0(pc_string, " + assessment_centre + birthplace + age + sex + age_squared")
-hba1c_all_lm <- lm(as.formula(paste0("hba1c_raw ~ ", all_covar_string)), data=lm_df)
+hba1c_all_lm <- lm(as.formula(paste0("hba1c ~ ", all_covar_string)), data=lm_df)
 plot_summs(hba1c_all_lm)
 ```
 
@@ -114,7 +114,7 @@ for (plt in ffq_pc_plts) print(plt)
 ```
 
 ```{r additional-variables, eval=F}
-acbpAdj_lm <- lm(hba1c_raw ~ assessment_centre + birthplace, data=raw_phenos,
+acbpAdj_lm <- lm(hba1c ~ assessment_centre + birthplace, data=raw_phenos,
                  na.action=na.exclude)
 phenos_expanded <- phenos %>%
   mutate(ffq_median_PC1_INT=INT(ffq_PC1),

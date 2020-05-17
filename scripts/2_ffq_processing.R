@@ -175,7 +175,7 @@ alc1.0 <- alcohol_dataset %>%
 
 median_replace <- function(x) {
   # Replace (-1, -3) with median of the rest of the values
-  ifelse(x %in% c(-1, -3), median(x[!(x %in% c(-1, -3))]), x)
+  ifelse(x %in% c(-1, -3), median(x[!(x %in% c(-1, -3))], na.rm=T), x)
 }
 
 # 1 = "Daily or ..."
@@ -188,12 +188,8 @@ median_replace <- function(x) {
 
 alc1.0 <- alc1.0 %>%
   mutate(
-    champagnewhitewine_glassesperweek.1578.0.0_QT=median_replace(
-      champagnewhitewine_glassesperweek.1578.0.0
-    ),
-    champagnewhitewine_glassespermonth.4418.0.0_QT=median_replace(
-      champagnewhitewine_glassespermonth.4418.0.0
-    ),
+    champagnewhitewine_glassesperweek.1578.0.0_QT=champagnewhitewine_glassesperweek.1578.0.0,
+    champagnewhitewine_glassespermonth.4418.0.0_QT=champagnewhitewine_glassespermonth.4418.0.0,
     champagnewhitewine_glassespermonth.derived.0.0_QT=case_when(
       alcohol_overallfreq.1558.0.0 %in% c(1, 2, 3) ~ 4 * champagnewhitewine_glassesperweek.1578.0.0_QT,
       alcohol_overallfreq.1558.0.0 %in% c(4, 5) ~ champagnewhitewine_glassespermonth.4418.0.0_QT,
@@ -204,12 +200,8 @@ alc1.0 <- alc1.0 %>%
 
 alc1.0 <- alc1.0 %>%
   mutate(
-    redwine_glassesperweek.1568.0.0_QT=median_replace(
-      redwine_glassesperweek.1568.0.0
-    ),
-    redwine_glassespermonth.4407.0.0_QT=median_replace(
-      redwine_glassespermonth.4407.0.0
-    ),
+    redwine_glassesperweek.1568.0.0_QT=redwine_glassesperweek.1568.0.0,
+    redwine_glassespermonth.4407.0.0_QT=redwine_glassespermonth.4407.0.0,
     redwine_glassespermonth.derived.0.0_QT=case_when(
       alcohol_overallfreq.1558.0.0 %in% c(1, 2, 3) ~ 4 * redwine_glassesperweek.1568.0.0_QT,
       alcohol_overallfreq.1558.0.0 %in% c(4, 5) ~ redwine_glassespermonth.4407.0.0_QT,
@@ -220,12 +212,8 @@ alc1.0 <- alc1.0 %>%
 
 alc1.0 <- alc1.0 %>%
   mutate(
-    beercider_pintsperweek.1588.0.0_QT=median_replace(
-      beercider_pintsperweek.1588.0.0
-    ),
-    beercider_pintspermonth.4429.0.0_QT=median_replace(
-      beercider_pintspermonth.4429.0.0
-    ),
+    beercider_pintsperweek.1588.0.0_QT=beercider_pintsperweek.1588.0.0,
+    beercider_pintspermonth.4429.0.0_QT=beercider_pintspermonth.4429.0.0,
     beercider_pintspermonth.derived.0.0_QT=case_when(
       alcohol_overallfreq.1558.0.0 %in% c(1, 2, 3) ~ 4 * beercider_pintsperweek.1588.0.0_QT,
       alcohol_overallfreq.1558.0.0 %in% c(4, 5) ~ beercider_pintspermonth.4429.0.0_QT,
@@ -236,12 +224,8 @@ alc1.0 <- alc1.0 %>%
 
 alc1.0 <- alc1.0 %>%
   mutate(
-    spirits_measuresperweek.1598.0.0_QT=median_replace(
-      spirits_measuresperweek.1598.0.0
-    ),
-    spirits_measurespermonth.4440.0.0_QT=median_replace(
-      spirits_measurespermonth.4440.0.0
-    ),
+    spirits_measuresperweek.1598.0.0_QT=spirits_measuresperweek.1598.0.0,
+    spirits_measurespermonth.4440.0.0_QT=spirits_measurespermonth.4440.0.0,
     spirits_measurespermonth.derived.0.0_QT=case_when(
       alcohol_overallfreq.1558.0.0 %in% c(1, 2, 3) ~ 4 * spirits_measuresperweek.1598.0.0_QT,
       alcohol_overallfreq.1558.0.0 %in% c(4, 5) ~ spirits_measurespermonth.4440.0.0_QT,
@@ -252,12 +236,8 @@ alc1.0 <- alc1.0 %>%
 
 alc1.0 <- alc1.0 %>%
   mutate(
-    fortwine_glassesperweek.1608.0.0_QT=median_replace(
-      fortwine_glassesperweek.1608.0.0
-    ),
-    fortwine_glassespermonth.4451.0.0_QT=median_replace(
-      fortwine_glassespermonth.4451.0.0
-    ),
+    fortwine_glassesperweek.1608.0.0_QT=fortwine_glassesperweek.1608.0.0,
+    fortwine_glassespermonth.4451.0.0_QT=fortwine_glassespermonth.4451.0.0,
     fortwine_glassespermonth.derived.0.0_QT=case_when(
       alcohol_overallfreq.1558.0.0 %in% c(1, 2, 3) ~ 4 * fortwine_glassesperweek.1608.0.0_QT,
       alcohol_overallfreq.1558.0.0 %in% c(4, 5) ~ fortwine_glassespermonth.4451.0.0_QT,
@@ -268,12 +248,8 @@ alc1.0 <- alc1.0 %>%
 
 alc1.0 <- alc1.0 %>%
   mutate(
-    otheralcohol_glassesperweek.5364.0.0_QT=median_replace(
-      otheralcohol_glassesperweek.5364.0.0
-    ),
-    otheralcohol_glassespermonth.4462.0.0_QT=median_replace(
-      otheralcohol_glassespermonth.4462.0.0
-    ),
+    otheralcohol_glassesperweek.5364.0.0_QT=otheralcohol_glassesperweek.5364.0.0,
+    otheralcohol_glassespermonth.4462.0.0_QT=otheralcohol_glassespermonth.4462.0.0,
     otheralcohol_glassespermonth.derived.0.0_QT=case_when(
       alcohol_overallfreq.1558.0.0 %in% c(1, 2, 3) ~ 4 * otheralcohol_glassesperweek.5364.0.0_QT,
       alcohol_overallfreq.1558.0.0 %in% c(4, 5) ~ otheralcohol_glassespermonth.4462.0.0_QT,
@@ -478,8 +454,8 @@ diet1.0 <- diet1.0 %>%
 
 diet1.0$nevereatcategories.6144.0.combined <- NULL
 
-milk_values <- c("Full cream", "Semi-skimmed", "Skimmed", "Soya", "Never/rarely have milk")
-milk_na_values <- c(general_na_values, "Other type of milk")
+milk_values <- c("Full cream", "Semi-skimmed", "Skimmed", "Soya", "Other type of milk", "Never/rarely have milk")
+milk_na_values <- c(general_na_values)
 
 diet1.0 <- diet1.0 %>%
   mutate(  # Data-coding 100387

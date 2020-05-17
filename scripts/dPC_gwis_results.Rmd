@@ -1,0 +1,273 @@
+---
+output: 
+  pdf_document
+title: "UKB gene-diet interaction project results"
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo=F, message=F,warning=F, 
+                      fig.path="../output/figures/dPC_gwis_results/")
+suppressMessages(silent <- lapply(
+  c("knitr", "kableExtra", "tidyverse", "cowplot", 
+    "pheatmap", "RColorBrewer"), 
+  library, character.only=T))
+```
+
+```{r load-sumstats}
+exposures <- c(paste0("ffq_PC", 1:10), "ffq_PC_ERS", "ffq_PC_ERS10", "ffq_PC_multiExp10")
+minimal_ss <- lapply(exposures, function(dPC) {
+  print(dPC)
+  read_tsv(paste0("../data/processed/main_ffq_PC_gwis_res/", dPC, "_merged_p0.01.gz")) %>%
+    filter(CHR != "X") %>%
+    mutate(CHR=as.integer(CHR))
+})
+names(minimal_ss) <- exposures
+
+pvals_list <- lapply(exposures, function(dPC) {
+  print(dPC)
+  scan(paste0("../data/processed/main_ffq_PC_gwis_res/", dPC, "_merged_pvals.txt"),
+       what=double())
+})
+names(pvals_list) <- exposures
+```
+
+```{r prep-funcs}
+lam.new <- function(x, p=.5){
+  # Calculate genomic inflation
+  x = x[!is.na(x)]
+  x.quantile <- quantile(x,p)
+  round((qchisq(1-x.quantile,1)/qchisq(p,1)),2)
+}
+
+make_qq <- function(pvals, main="QQ plot", thin=T){
+  # Make a Quantile-Quantile plot
+    
+  # Process p-values
+  nlpvals <- sort(-log10(pvals[pvals > 0]))
+  exp_nlp <- qexp(ppoints(length(nlpvals))) / log(10)
+
+  # thin_thresh <- 0.0005
+  if (thin) {
+    thin_idx <- c(sample(which(nlpvals < 2),  # 1000 points from p < 0.01
+                         size=min(length(nlpvals), 1000)), 
+                  sample(which(nlpvals > 2 & nlpvals < 4),  # 1000 points from 0.01 > p > 1e-4
+                         size=min(length(nlpvals), 1000)),
+                  which(nlpvals > 4))  # All points from p < 1e-4
+  } else {
+    thin_idx <- 1:length(nlpvals)
+  }
+  x_vals <- exp_nlp[thin_idx]
+  y_vals <- nlpvals[thin_idx]
+  
+  # Generate the plot
+  par(ps=18)
+  plot(x=x_vals, y=y_vals, xlab="Expected", ylab="Observed", 
+       main=main, col="#000000", cex=.8, bg="#000000", pch=21, ylim=c(0, ceiling(max(nlpvals))))
+  abline(0, 1, lty=2)
+  
+  y_vals
+}
+
+make_manhattan <- function(data, p_col="p", chr_col="CHR", pos_col="POS", ymax=NULL, main="", lower_thresh=0.01,
+                           suggestiveline=-log10(1e-05), genomewideline=-log10(5e-08)){
+    # Make a Manhattan plot
+    
+    data <- data[data[[p_col]] != 0, ]
+    
+    if (is.null(ymax)){  # Set upper limit for y-axis
+        ylim <- c(-log10(lower_thresh), ceiling(-log10(min(data[[p_col]]))))
+    } else {
+        ylim <- c(-log10(lower_thresh), ymax)
+    }
+    
+    data <- data[data[[p_col]] < lower_thresh, ]  # Filter p-values for computational efficiency
+    
+    options(repr.plot.width = 12, repr.plot.height = 6); par(ps = 18, mar = c(5,5,5,5))
+    suppressWarnings(qqman::manhattan(  # Create Manhattan plot
+        data, chr=chr_col, bp=pos_col, p=p_col,  
+        suggestiveline=suggestiveline, genomewideline=genomewideline, 
+        ylim=ylim, main=main))
+}
+
+make_joint_plot <- function(data, p_main="P_Value_Main", p_joint="P_Value_Joint", 
+                            boundary_main=1e-5, boundary_joint=5e-8,
+                            min_p_main=1e-16, lower_thresh=0.01, main=""){
+    
+    data <- data %>%
+        filter(.data[[p_main]] != 0,
+               .data[[p_joint]] != 0,
+               .data[[p_main]] > min_p_main,  # Easier visualization of the "borderline" variants we care about here
+               .data[[p_joint]] < lower_thresh) %>%  # Filter p-values for computational efficiency
+        mutate(nlp_main=-log10(.data[[p_main]]),
+               nlp_joint=-log10(.data[[p_joint]]),
+               highlight=(nlp_main < -log10(boundary_main) & 
+                            nlp_joint > -log10(boundary_joint)))
+    
+    ggplot(data, aes(x=nlp_main, y=nlp_joint, color=highlight)) +
+        geom_point() +
+        geom_vline(xintercept=-log10(boundary_main), linetype="dotted") +
+        geom_hline(yintercept=-log10(boundary_joint), linetype="dotted") +
+        scale_color_manual(values=c("gray", "chocolate")) +
+        labs(x="-log(P) for marginal effect",
+             y="-log(P) for joint interaction effect",
+             title=main)
+}
+```
+
+# Visualize
+
+```{r viz, fig.width=4}
+my_plot_hook <- function(x, options)
+  paste("\n", knitr::hook_plot_tex(x, options), "\n")
+knitr::knit_hooks$set(plot = my_plot_hook)
+
+for (nm in names(minimal_ss)) {
+  ss <- minimal_ss[[nm]]
+  # make_qq(ss$P_Value_Interaction, main=nm)
+  # legend('topleft', c(paste0('lambda_GC = ', lam.new(ss$p))), 
+  #        col=c("#000000"), pch=c(21), bty='n')
+  make_manhattan(ss, p_col="P_Value_Interaction", lower_thresh=0.001,
+                 main=nm)
+}
+
+for (nm in names(pvals_list)) {
+  make_qq(pvals_list[[nm]], main=nm)
+}
+```
+
+# Prioritize
+
+```{r hba1c-vqtl}
+vqtl_ss <- read_tsv("../data/processed/hba1c_vqtl/hba1c_all_chr.vqtl",
+                    col_types=cols_only(Chr="i", bp="i", P="d")) %>%
+  select(CHR=Chr, POS=bp, p_vqtl=P) %>%
+  distinct(CHR, POS, .keep_all=T)
+```
+
+```{r interaction-enrichment}
+full_ss <- lapply(c("ffq_PC_ERS10", "ffq_PC10"), function(dPC) {
+  print(dPC)
+  read_tsv(paste0("../data/processed/main_ffq_PC_gwis_res/", dPC, "_merged.gz")) %>%
+    filter(CHR != "X") %>%
+    mutate(CHR=as.integer(CHR))
+})
+names(full_ss) <- c("ffq_PC_ERS10", "ffq_PC10")
+
+vqtl_enrich_df <- full_ss$ffq_PC_ERS10 %>%
+  select(CHR, POS, P_Value_Interaction, P_Value_Main, P_Value_Joint) %>%
+  inner_join(vqtl_ss, by=c("CHR", "POS")) %>%
+  mutate(suggestive_interaction=P_Value_Interaction < 1e-5,
+         nlp_interaction=-log10(P_Value_Interaction),
+         nlp_vqtl=-log10(p_vqtl),
+         P_Value_Main=ifelse(P_Value_Main == 0, 1e-300, P_Value_Main),
+         nlp_marg=-log10(P_Value_Main),
+         int_bucket=cut(P_Value_Interaction, c(0, 1e-5, 0.01, 1), 
+                        labels=c("p<1e-5", "p<0.01", "p>0.01")),
+         vqtl_bucket=cut(p_vqtl, c(0, 5e-8, 1e-5, 0.01, 1), 
+                         labels=c("p<5e-8", "p<1e-5", "p<0.01", "p>0.01")),
+         marg_bucket=cut(P_Value_Main, c(0, 5e-8, 1e-5, 0.01, 1), 
+                         labels=c("p<5e-8", "p<1e-5", "p<0.01", "p>0.01"),
+                         include.lowest=T))
+
+nlp_lm <- lm(nlp_interaction ~ nlp_vqtl + nlp_marg,
+             data=vqtl_enrich_df)
+kable(broom::tidy(nlp_lm), caption="P_interaction ~ P_vQTL + P_Marginal (all p-values as -log10)")
+
+vqtl_thresh_vec <- c(1e-1, 5e-2, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 5e-8)
+vqtl_thresh_curve_sugg <- sapply(vqtl_thresh_vec, function(thresh) {
+  int_sugg_tbl <- with(vqtl_enrich_df, table(p_vqtl < thresh, 
+                                             P_Value_Interaction < 1e-5))
+  chisq.fit <- chisq.test(int_sugg_tbl)
+  chisq.fit$statistic
+})
+vqtl_thresh_curve_nom <- sapply(vqtl_thresh_vec, function(thresh) {
+  int_sugg_tbl <- with(vqtl_enrich_df, table(p_vqtl < thresh, 
+                                             P_Value_Interaction < 0.05))
+  chisq.fit <- chisq.test(int_sugg_tbl)
+  chisq.fit$statistic
+})
+
+qplot(x=vqtl_thresh_vec, y=vqtl_thresh_curve_sugg) +
+  scale_x_log10() +
+  geom_hline(yintercept=qchisq(0.05, 1, lower.tail=F), linetype="dashed") +
+  labs(x="vQTL threshold", 
+       y="Chi-square stat for 2x2 table\n(p_vQTL < thresh & p_int< 1e-5)")
+qplot(x=fct_rev(factor(vqtl_thresh_vec)), y=vqtl_thresh_curve_nom) +
+  # scale_x_log10() +
+  geom_hline(yintercept=qchisq(0.05, 1, lower.tail=F), linetype="dashed") +
+  labs(x="vQTL threshold", 
+       y="Chi-square stat for 2x2 table\n(p_vQTL < thresh & p_int < 0.05)")
+
+vqtl_enrich_df %>%
+  filter(p_vqtl < 1e-5) %>%
+  make_manhattan(p_col="P_Value_Interaction", lower_thresh=0.1,
+                 main="ERS10 pvals for p_vQTL < 1e-5")
+
+vqtl_enrich_df %>%
+  filter(p_vqtl < 1e-2) %>%
+  make_manhattan(p_col="P_Value_Interaction", lower_thresh=0.01,
+                 main="ERS10 pvals for p_vQTL < 0.05")
+```
+
+```{r test-adafdr}
+p_input <- array(vqtl_enrich_df$P_Value_Interaction)
+x_input <- matrix(vqtl_enrich_df$nlp_vqtl, ncol=1)
+fdr_adj <- RadaFDR::adafdr_test(
+  p_input=p_input,
+  x_input=x_input,
+  alpha=0.05,
+  covariate_type=c(0, 0)
+)
+```
+
+```{r sex-vqtl}
+sex_sugg <- read_tsv("../data/processed/main_ffq_PC_gwis_res/sex_merged_sugg")
+
+subset_cmd <- paste("awk '$1 == 10 && $6 > 71090000 && $6 < 71200000'",
+                    "../data/processed/hba1c_vqtl/hba1c_all_chr.vqtl",
+                    "> ../data/processed/hba1c_vqtl/sex_gwis_locus.vqtl")
+system(subset_cmd)
+
+vqtl_sex_locus <- read_tsv("../data/processed/hba1c_vqtl/sex_gwis_locus.vqtl", 
+                           col_names=F) %>%
+  select(chr=1, pos=6, p=12)
+
+a <- bind_rows(list(sex_int=select(sex_sugg, pos=POS, p=P_Value_Interaction),
+                    vqtl=vqtl_sex_locus),
+               .id="source") %>%
+  mutate(negLogP=-log10(p))
+
+ggplot(a, aes(x=pos, y=negLogP)) +
+  geom_point() + 
+  facet_wrap(~source, ncol=1)
+```
+
+
+```{r old, eval=F}
+# vqtl_enrich_df %>%
+#   ggplot(aes(x=P_Value_Interaction)) +
+#   geom_histogram(breaks=seq(0, 1, by=0.1)) +
+#   facet_wrap(vars(vqtl_bucket), scales="free") +
+#   labs(title="Enrichments according to vQTL")
+# 
+# vqtl_enrich_df %>%
+#   ggplot(aes(x=P_Value_Interaction)) +
+#   geom_histogram(breaks=seq(0, 1, by=0.1)) +
+#   facet_wrap(vars(marg_bucket), scales="free") +
+#   labs(title="Enrichments according to main effects")
+# 
+# vqtl_enrich_tbl <- table(vqtl_enrich_df$vqtl_bucket,
+#                          vqtl_enrich_df$int_bucket)
+# vqtl_cst <- chisq.test(vqtl_enrich_tbl)
+# print("vQTL Enrichment:")
+# vqtl_cst$observed / vqtl_cst$expected
+# vqtl_cst
+# 
+# marg_enrich_tbl <- table(vqtl_enrich_df$marg_bucket,
+#                          vqtl_enrich_df$int_bucket)
+# marg_cst <- chisq.test(marg_enrich_tbl)
+# print("Marginal Effects Enrichment:")
+# marg_cst$observed / marg_cst$expected
+# marg_cst
+```
+

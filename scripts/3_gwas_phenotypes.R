@@ -65,13 +65,20 @@ gwis_model_phenos <- gwis_model_phenos %>%
          hba1c_withDM=hba1c_1)
 
 # Create FFQ-PC-based "environmental risk score"
-keep_PCs <- grep("ffq_PC", names(gwis_model_phenos), value=T)
-lm_formula <- as.formula(paste0("hba1c ~ ", paste(keep_PCs, collapse=" + ")))
-lm_fit <- lm(lm_formula, data=gwis_model_phenos)  # Linear model predicting HbA1c from all relevant FFQ-PCs
-saveRDS(lm_fit, "../data/processed/ERS_lm_fit.rds")
-gwis_model_phenos$ffq_PC_ERS <- predict(lm_fit, newdata=gwis_model_phenos)  # Generate ERS for each individual (including individuals w/ DM)
-gwis_model_phenos$id <- format(gwis_model_phenos$id, scientific=F)  # Allows for better read-in after writing
+ers_PCs <- grep("ffq_PC", names(gwis_model_phenos), value=T)
+ers_lm_formula <- as.formula(paste0("hba1c ~ ", paste(ers_PCs, collapse=" + ")))
+ers_lm_fit <- lm(ers_lm_formula, data=gwis_model_phenos)  # Linear model predicting HbA1c from all relevant FFQ-PCs
+saveRDS(ers_lm_fit, "../data/processed/ERS_lm_fit.rds")
+gwis_model_phenos$ffq_PC_ERS <- predict(ers_lm_fit, newdata=gwis_model_phenos)  # Generate ERS for each individual (including individuals w/ DM)
 
+ers10_PCs <- paste0("ffq_PC", 1:10)
+ers10_lm_formula <- as.formula(paste0("hba1c ~ ", paste(ers10_PCs, collapse=" + ")))
+ers10_lm_fit <- lm(ers10_lm_formula, data=gwis_model_phenos)  # Linear model predicting HbA1c from all relevant FFQ-PCs
+saveRDS(ers10_lm_fit, "../data/processed/ERS10_lm_fit.rds")
+gwis_model_phenos$ffq_PC_ERS10 <- predict(ers10_lm_fit, newdata=gwis_model_phenos)  # Generate ERS for each individual (including individuals w/ DM)
+
+# Write final phenotype file
+gwis_model_phenos$id <- format(gwis_model_phenos$id, scientific=F)  # Allows for better read-in after writing
 write_csv(gwis_model_phenos, "../data/processed/ukbb_diet_gwis_phenos.csv")
 write_csv(slice(gwis_model_phenos, 1:1000), "../data/processed/ukbb_diet_gwis_phenos_1k.csv")
 write_csv(slice(gwis_model_phenos, 1:10000), "../data/processed/ukbb_diet_gwis_phenos_10k.csv")

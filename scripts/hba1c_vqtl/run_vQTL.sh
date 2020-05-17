@@ -14,7 +14,7 @@ cd ~/kw/ukbb-gene-diet/scripts
 #R --slave <<EOF
 #library(tidyverse)
 #phenos <- read_csv("../data/processed/ukbb_diet_gwis_phenos.csv")
-#cov_lm <- lm(hba1c ~ sex + age + age_squared + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=phenos, na.action=na.exclude)
+#cov_lm <- lm(hba1c_raw ~ sex + age + age_squared + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=phenos, na.action=na.exclude)
 #phenos$hba1c_resid <- resid(cov_lm)
 #phenos %>% mutate(FID=id, IID=id) %>% select(FID, IID, hba1c_resid) %>% write_tsv("${dir}/ukbb_hba1c_resid.pheno")
 #EOF

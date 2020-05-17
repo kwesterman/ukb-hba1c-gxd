@@ -58,7 +58,7 @@ ggplot(raw_phenos, aes(x=fct_rev(birthplace))) +
   labs(x="Birthplace")
 ```
 
-## Are potential confounders associated with HbA1c?
+## Exposure and covariate associations with HbA1c
 
 ```{r hba1c-associations}
 lm_df <- phenos %>%  # Retrieves assessment centre and birthplace with their original factor codings
@@ -79,7 +79,14 @@ plot_summs(hba1c_basic_lm)
 
 all_covar_string <- paste0(pc_string, " + assessment_centre + birthplace + age + sex + age_squared")
 hba1c_all_lm <- lm(as.formula(paste0("hba1c ~ ", all_covar_string)), data=lm_df)
-plot_summs(hba1c_all_lm)
+plot_summs(hba1c_all_lm, scale=T)
+
+diet_string <- paste0("ffq_PC", 1:10, collapse=" + ")
+all_diet_covar_string <- paste0(diet_string, " + ", pc_string, 
+                                " + assessment_centre + birthplace + age + sex + age_squared")
+hba1c_diet_all_lm <- lm(as.formula(paste0("hba1c ~ ", all_diet_covar_string)), data=lm_df)
+plot_summs(hba1c_diet_all_lm, scale=T,
+           coefs=paste0("ffq_PC", 1:10))
 ```
 
 ```{r explore-pc2}

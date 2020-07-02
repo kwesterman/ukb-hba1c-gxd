@@ -5,7 +5,7 @@ title: "UKB gene-diet interaction project results"
 ---
 
 ```{r setup, include=F}
-knitr::opts_chunk$set(echo=F, message=F,warning=F, 
+knitr::opts_chunk$set(echo=F, message=F,warning=F, dev="png", dpi=300,
                       fig.path="../output/figures/dPC_gwis_results/")
 suppressMessages(silent <- lapply(
   c("knitr", "kableExtra", "tidyverse", "cowplot", 
@@ -14,9 +14,8 @@ suppressMessages(silent <- lapply(
 ```
 
 ```{r load-sumstats}
-exposures <- c(paste0("ffq_PC", 1:10), "ffq_PC_ERS", "ffq_PC_ERS10", "ffq_PC_multiExp10")
+exposures <- c(paste0("ffq_PC", 1:10), "ffq_PC_ERS10")
 minimal_ss <- lapply(exposures, function(dPC) {
-  print(dPC)
   read_tsv(paste0("../data/processed/main_ffq_PC_gwis_res/", dPC, "_merged_p0.01.gz")) %>%
     filter(CHR != "X") %>%
     mutate(CHR=as.integer(CHR))
@@ -24,69 +23,79 @@ minimal_ss <- lapply(exposures, function(dPC) {
 names(minimal_ss) <- exposures
 
 pvals_list <- lapply(exposures, function(dPC) {
-  print(dPC)
-  scan(paste0("../data/processed/main_ffq_PC_gwis_res/", dPC, "_merged_pvals.txt"),
-       what=double())
+  read_csv(paste0("../data/processed/main_ffq_PC_gwis_res/", dPC, "_merged_pvals.txt"),
+           col_names="p_int")
 })
 names(pvals_list) <- exposures
 ```
 
 ```{r prep-funcs}
-lam.new <- function(x, p=.5){
-  # Calculate genomic inflation
+calc_lambda <- function(x, p=0.5){
+  # Calculate genomic inflation lambda value
   x = x[!is.na(x)]
-  x.quantile <- quantile(x,p)
-  round((qchisq(1-x.quantile,1)/qchisq(p,1)),2)
+  x.quantile <- quantile(x, p)
+  round(qchisq(1 - x.quantile, 1) / qchisq(p, 1), 2)
 }
 
-make_qq <- function(pvals, main="QQ plot", thin=T){
-  # Make a Quantile-Quantile plot
-    
+make_qq <- function(data, pval_col, main=""){
+  # Make a quantile-quantile plot
+  data <- filter(data, data[[pval_col]] > 0)  # In case extremely low p-values are stored as zero
+
   # Process p-values
-  nlpvals <- sort(-log10(pvals[pvals > 0]))
-  exp_nlp <- qexp(ppoints(length(nlpvals))) / log(10)
-
-  # thin_thresh <- 0.0005
-  if (thin) {
-    thin_idx <- c(sample(which(nlpvals < 2),  # 1000 points from p < 0.01
-                         size=min(length(nlpvals), 1000)), 
-                  sample(which(nlpvals > 2 & nlpvals < 4),  # 1000 points from 0.01 > p > 1e-4
-                         size=min(length(nlpvals), 1000)),
-                  which(nlpvals > 4))  # All points from p < 1e-4
-  } else {
-    thin_idx <- 1:length(nlpvals)
-  }
-  x_vals <- exp_nlp[thin_idx]
-  y_vals <- nlpvals[thin_idx]
+  y_vals <- sort(-log10(data[[pval_col]]))
+  x_vals <- -log10(rev(ppoints(length(y_vals))))  # ppoints generates a uniform probability distribution
   
-  # Generate the plot
+  # Trim points at higher p-values (credit to RaMWAS package for code snippet)
+  levels = as.integer((x_vals - x_vals[1]) / (tail(x_vals, 1) - x_vals[1]) * 2000)
+  keep = c(TRUE, diff(levels) != 0)
+  levels = as.integer((y_vals - y_vals[1])/(tail(y_vals, 1) - y_vals[1]) * 2000)
+  keep = keep | c(TRUE, diff(levels) != 0)
+  keep = which(keep)
+  
   par(ps=18)
-  plot(x=x_vals, y=y_vals, xlab="Expected", ylab="Observed", 
-       main=main, col="#000000", cex=.8, bg="#000000", pch=21, ylim=c(0, ceiling(max(nlpvals))))
+  plot(x=x_vals[keep], y=y_vals[keep], 
+       xlab=expression(-log[10](italic(p)) * " (Expected)"), 
+       ylab=expression(-log[10](italic(p)) * " (Observed)"),
+       main=main, cex=0.8, 
+       cex.lab=0.8, cex.main=0.9, 
+       pch=16, ylim=c(0, ceiling(max(y_vals))))
   abline(0, 1, lty=2)
-  
-  y_vals
+  legend(x='topleft', y='topleft',
+         bquote(lambda == .(calc_lambda(data[[pval_col]]))), 
+         cex=0.9, bty="n")
 }
-
-make_manhattan <- function(data, p_col="p", chr_col="CHR", pos_col="POS", ymax=NULL, main="", lower_thresh=0.01,
-                           suggestiveline=-log10(1e-05), genomewideline=-log10(5e-08)){
-    # Make a Manhattan plot
-    
-    data <- data[data[[p_col]] != 0, ]
-    
-    if (is.null(ymax)){  # Set upper limit for y-axis
-        ylim <- c(-log10(lower_thresh), ceiling(-log10(min(data[[p_col]]))))
-    } else {
-        ylim <- c(-log10(lower_thresh), ymax)
+make_manhattan <- function(data, pval_col, main="") {
+  # Make a Manhattan plot
+  
+  data <- filter(data, data[[pval_col]] > 0)  # In case extremely low p-values are stored as zero
+  nlps <- -log10(data[[pval_col]])
+  
+  # Trim points in crowded regions (credit to RaMWAS package for code snippet)
+  yfac = as.integer(nlps * 100) + 1L
+  yorder = sort.list(yfac)
+  levels(yfac) = as.character(seq_len(max(yfac)))
+  class(yfac) = "factor"
+  ygroup = split(seq_along(yfac), yfac)
+  for (i in seq_along(ygroup)) {
+    if (length(ygroup[[i]]) > 300) {
+      ygroup[[i]] = sample(ygroup[[i]], size=150, replace=FALSE)
     }
-    
-    data <- data[data[[p_col]] < lower_thresh, ]  # Filter p-values for computational efficiency
-    
-    options(repr.plot.width = 12, repr.plot.height = 6); par(ps = 18, mar = c(5,5,5,5))
-    suppressWarnings(qqman::manhattan(  # Create Manhattan plot
-        data, chr=chr_col, bp=pos_col, p=p_col,  
-        suggestiveline=suggestiveline, genomewideline=genomewideline, 
-        ylim=ylim, main=main))
+  }
+  keep = unlist(ygroup, use.names=FALSE)
+  
+  CMplot::CMplot(
+    tibble(data$rsID, data$CHR, data$POS, data[[pval_col]])[keep, ],
+    type="p",
+    cex.lab=1,
+    plot.type="m",
+    cex=0.35,
+    threshold=5e-8,
+    threshold.col="gray",
+    amplify=F,
+    file.output=F,
+    main=main,
+    verbose=F
+  )
 }
 
 make_joint_plot <- function(data, p_main="P_Value_Main", p_joint="P_Value_Joint", 
@@ -116,35 +125,246 @@ make_joint_plot <- function(data, p_main="P_Value_Main", p_joint="P_Value_Joint"
 
 # Visualize
 
-```{r viz, fig.width=4}
-my_plot_hook <- function(x, options)
-  paste("\n", knitr::hook_plot_tex(x, options), "\n")
-knitr::knit_hooks$set(plot = my_plot_hook)
+```{r viz}
+# my_plot_hook <- function(x, options)
+#   paste("\n", knitr::hook_plot_tex(x, options), "\n")
+# knitr::knit_hooks$set(plot = my_plot_hook)
+
+# for (nm in names(minimal_ss)) {
+#   ss <- minimal_ss[[nm]]
+#   # make_qq(ss$P_Value_Interaction, main=nm)
+#   # legend('topleft', c(paste0('lambda_GC = ', lam.new(ss$p))), 
+#   #        col=c("#000000"), pch=c(21), bty='n')
+#   make_manhattan(ss, p_col="P_Value_Interaction", lower_thresh=0.001,
+#                  main=nm)
+# }
+# 
+# for (nm in names(pvals_list)) {
+#   make_qq(pvals_list[[nm]], main=nm)
+# }
 
 for (nm in names(minimal_ss)) {
-  ss <- minimal_ss[[nm]]
-  # make_qq(ss$P_Value_Interaction, main=nm)
-  # legend('topleft', c(paste0('lambda_GC = ', lam.new(ss$p))), 
-  #        col=c("#000000"), pch=c(21), bty='n')
-  make_manhattan(ss, p_col="P_Value_Interaction", lower_thresh=0.001,
-                 main=nm)
-}
-
-for (nm in names(pvals_list)) {
-  make_qq(pvals_list[[nm]], main=nm)
+  par(mfrow=c(1, 2))
+  make_qq(pvals_list[[nm]], pval_col="p_int", main=nm)
+  make_manhattan(minimal_ss[[nm]], pval_col="P_Value_Interaction", main=nm)
 }
 ```
 
+# Sensitivity models
+
+```{r pruning}
+prune_chromosome <- function(chr_df, pval_col, locus_width) {
+  # Prune variants given a chromosome-specific summary statistic data frame
+  df <- arrange(chr_df, !!sym(pval_col))  # Sort by ascending p-value
+  pruned_df <- tibble()
+  while(nrow(df) > 0) {
+    pruned_df <- bind_rows(pruned_df, df[1, ])  # Add lowest p-value to pruned dataset
+    df <- filter(df, (POS < df$POS[1] - locus_width / 2) |  # Remove rest of variants in that distance-based locus
+                   (POS > df$POS[1] + locus_width / 2))
+  }
+  pruned_df
+}
+
+prune_suggestive_variants <- function(ss_df, pval_col, locus_width=500000) {
+  # Prune variants across all chromosomes using a simple distance-based approach
+  ss_df %>%
+    filter(!!sym(pval_col) < 1e-5) %>%
+    nest(data=-CHR) %>%
+    mutate(pruned_ss=map(data, prune_chromosome, pval_col, locus_width)) %>%
+    unnest(pruned_ss) %>%
+    select(-data) %>%
+    dplyr::rename(index_var=rsID)
+}
+
+pruned_ss <- lapply(minimal_ss, prune_suggestive_variants, "P_Value_Interaction")
+```
+
+```{r sensitivity, eval=F}
+read_SM <- function(exposure, sm) {
+  read_tsv(paste0("../data/processed/sensitivity_models/", exposure, "_", sm)) %>%
+    filter(rsID %in% pruned_ss[[exposure]]$index_var) %>%
+    dplyr::rename(index_var=rsID) %>%
+    mutate(CHR=as.integer(CHR))
+}
+
+all_SM_res <- lapply(setNames(exposures, exposures), function(e) {
+  bind_rows(list(
+    Base=pruned_ss[[e]],
+    SM1=read_SM(e, "SM1"),
+    SM2=read_SM(e, "SM2"),
+    SM3=read_SM(e, "SM3"),
+    SM4=read_SM(e, "SM4")
+  ), .id="model")
+}) %>%
+  bind_rows(.id="exposure") %>%
+  dplyr::rename(beta=Beta_Interaction_1,
+                var_beta=Var_Beta_Interaction_1_1) %>%
+  mutate(lower95=beta - 1.96 * sqrt(var_beta),
+         upper95=beta + 1.96 * sqrt(var_beta))
+
+for (e in exposures) {
+  plt <- all_SM_res %>%
+    # mutate(nlp=-log10(P_Value_Interaction)) %>%
+    filter(exposure == e) %>%
+    group_by(index_var) %>%
+    filter(any(P_Value_Interaction < 1e-6 & model == "Base")) %>%
+    ungroup() %>%
+    ggplot(aes(x=index_var, y=beta, color=model, group=model)) +
+    geom_point(position=position_dodge(width=0.3)) +
+    geom_errorbar(aes(ymin=lower95, ymax=upper95), width=0,
+                  position=position_dodge(width=0.3)) +
+    scale_color_manual(name="Model", values=viridis::viridis(5)) +
+    labs(x="Suggestive locus index variant",
+         y="Beta (w/ 95% CI)") +
+    theme(axis.text.x=element_text(angle=30, hjust=0.9))
+  print(plt)
+}
+```
+
+```{r missing-suggestive-rsids, eval=F}
+# Are any suggestive variants missing from the qctool v2 subset of UKB?
+ers10_sm1 <- read_tsv("../data/processed/sensitivity_models/ffq_PC_ERS10_SM1")  # One of the sensitivity model s.s. datasets
+
+sugg_subsets_list <- lapply(minimal_ss,  # Gather all variant results that are suggestive for any exposure
+                            function(x) filter(x, rsID %in% missing_rsids)) %>%
+  bind_rows(.id="exposure")
+all(sugg_subsets_list$rsID %in% ers10_sm1$rsID)  # Are all suggestive variants represented in the sensitivity model s.s.? (yes)
+```
+
+```{r old, eval=F}
+# vqtl_enrich_df %>%
+#   ggplot(aes(x=P_Value_Interaction)) +
+#   geom_histogram(breaks=seq(0, 1, by=0.1)) +
+#   facet_wrap(vars(vqtl_bucket), scales="free") +
+#   labs(title="Enrichments according to vQTL")
+# 
+# vqtl_enrich_df %>%
+#   ggplot(aes(x=P_Value_Interaction)) +
+#   geom_histogram(breaks=seq(0, 1, by=0.1)) +
+#   facet_wrap(vars(marg_bucket), scales="free") +
+#   labs(title="Enrichments according to main effects")
+# 
+# vqtl_enrich_tbl <- table(vqtl_enrich_df$vqtl_bucket,
+#                          vqtl_enrich_df$int_bucket)
+# vqtl_cst <- chisq.test(vqtl_enrich_tbl)
+# print("vQTL Enrichment:")
+# vqtl_cst$observed / vqtl_cst$expected
+# vqtl_cst
+# 
+# marg_enrich_tbl <- table(vqtl_enrich_df$marg_bucket,
+#                          vqtl_enrich_df$int_bucket)
+# marg_cst <- chisq.test(marg_enrich_tbl)
+# print("Marginal Effects Enrichment:")
+# marg_cst$observed / marg_cst$expected
+# marg_cst
+```
+
+# T2D clusters
+
+Notes:
+
+* Can possibly use updated (more SNPs) clusters
+* Currently using weights for all variants
+
+```{r prep-t2d-clusters}
+udler_t2d_snps <- readxl::read_excel("../data/raw/udler2018_snps.xlsx", skip=2) %>%
+  select(SNP=Variant, A1=`Risk allele`)
+
+udler_weights <- readxl::read_excel("../data/raw/udler2018_locus_weights.xlsx",
+                                    skip=1) %>%
+  inner_join(udler_t2d_snps, by="SNP") %>%
+  dplyr::rename(Beta_Cell=`Beta-Cell`)
+write(udler_weights$SNP, "../data/processed/t2d_cluster_subsets/t2d_cluster_rsIDs.txt")
+
+clusters <- c("Beta_Cell", "Proinsulin", "Obesity", "Lipodystrophy", "Liver")
+for (clust in clusters) {
+  select(udler_weights, SNP, A1, all_of(clust)) %>%
+    write_tsv(paste0("../data/processed/t2d_cluster_subsets/", clust, "_weights.txt"),
+              col_names=F)
+}
+```
+
+```{r t2d-cluster-interactions}
+samplefile_df <- read_delim("../data/processed/t2d_cluster_subsets/ukb27892_imp_chrAUT_v3_s487395.sample",
+                            delim=" ", skip=2, col_names=c("id", "X", "Y", "Z"))
+cluster_score_dfs <- lapply(setNames(clusters, clusters), function(clust) {
+  read_tsv(paste0("../data/processed/t2d_cluster_subsets/", clust, ".sscore")) %>%
+    select(IID, SCORE1_AVG) %>%
+    setNames(c("id", paste0(clust, "_score"))) %>%
+    mutate(id=samplefile_df$id)
+})
+cluster_scores_df <- Reduce(inner_join, cluster_score_dfs)
+
+phenos <- read_csv("../data/processed/ukbb_diet_gwis_phenos.csv")
+
+model_covs <- c("sex", "age", "age_squared", "cov_GENO_ARRAYUKBL", 
+                paste0("PC", 1:10), 
+                setdiff(grep("^ac", names(phenos), value=T), "acStockport_pilot"),
+                grep("^bp", names(phenos), value=T),
+                "bmi", "smk_012")
+cluster_model_df <- phenos %>%
+  select(id, hba1c,
+         all_of(exposures),
+         all_of(model_covs)) %>%
+  mutate_at(vars(exposures), scale) %>%
+  inner_join(cluster_scores_df, by="id")
+
+cov_string <- paste0("sex + age + age_squared + cov_GENO_ARRAYUKBL + ",
+                     paste0("PC", 1:10, collapse=" + "))
+cluster_models <- expand_grid(cluster=clusters, exposure=exposures) %>%
+  mutate(model=map2(cluster, exposure, function(clust, exposure) {
+    lm(as.formula(paste0("hba1c ~ ", exposure, " * ", clust, "_score + ", cov_string)),
+       data=cluster_model_df) %>%
+      broom::tidy() %>%
+      filter(term == paste0(exposure, ":", clust, "_score"))
+  })) %>%
+  unnest(model)
+
+cluster_models_sm3 <- expand_grid(cluster=clusters, exposure=exposures) %>%
+  mutate(model=map2(cluster, exposure, function(clust, exposure) {
+    lm(as.formula(paste0("hba1c ~ ", paste0(c(exposure, cov_vec_sm3),
+                                            "*", cluster, "_score ", 
+                                            collapse=" + "))), 
+       data=cluster_model_df) %>%
+      broom::tidy() %>%
+      filter(term == paste0(exposure, ":", clust, "_score"))
+  })) %>%
+  unnest(model)
+
+cluster_models_wide <- cluster_models %>%
+  select(cluster, exposure, estimate) %>%
+  pivot_wider(names_from="exposure", values_from="estimate")
+cluster_models_wide_mat <- as.matrix(cluster_models_wide[-1])
+rownames(cluster_models_wide_mat) <- cluster_models_wide$cluster
+corr_sign_annot_df <- data.frame(
+  row.names=exposures,
+  corr_sign=as.factor(sapply(exposures, function(e) {
+    sign(cor(phenos$hba1c, phenos[[e]], use="pairwise.complete.obs"))
+  }))
+)
+pheatmap::pheatmap(
+  cluster_models_wide_mat,
+  cluster_cols=F,
+  treeheight_row=10, treeheight_col=10,
+  annotation_col=corr_dir_annot_df,
+  angle_col=45
+)
+```
+
+![](../output/figures/2b_diet_qc/loadings-1.pdf)
+
+
+<!--
 # Prioritize
 
-```{r hba1c-vqtl}
+```{r hba1c-vqtl, eval=F}
 vqtl_ss <- read_tsv("../data/processed/hba1c_vqtl/hba1c_all_chr.vqtl",
                     col_types=cols_only(Chr="i", bp="i", P="d")) %>%
   select(CHR=Chr, POS=bp, p_vqtl=P) %>%
   distinct(CHR, POS, .keep_all=T)
 ```
 
-```{r interaction-enrichment}
+```{r interaction-enrichment, eval=F}
 full_ss <- lapply(c("ffq_PC_ERS10", "ffq_PC10"), function(dPC) {
   print(dPC)
   read_tsv(paste0("../data/processed/main_ffq_PC_gwis_res/", dPC, "_merged.gz")) %>%
@@ -200,16 +420,16 @@ qplot(x=fct_rev(factor(vqtl_thresh_vec)), y=vqtl_thresh_curve_nom) +
 
 vqtl_enrich_df %>%
   filter(p_vqtl < 1e-5) %>%
-  make_manhattan(p_col="P_Value_Interaction", lower_thresh=0.1,
+  make_manhattan(pval_col="P_Value_Interaction",
                  main="ERS10 pvals for p_vQTL < 1e-5")
 
 vqtl_enrich_df %>%
   filter(p_vqtl < 1e-2) %>%
-  make_manhattan(p_col="P_Value_Interaction", lower_thresh=0.01,
+  make_manhattan(pval_col="P_Value_Interaction",
                  main="ERS10 pvals for p_vQTL < 0.05")
 ```
 
-```{r test-adafdr}
+```{r test-adafdr, eval=F}
 p_input <- array(vqtl_enrich_df$P_Value_Interaction)
 x_input <- matrix(vqtl_enrich_df$nlp_vqtl, ncol=1)
 fdr_adj <- RadaFDR::adafdr_test(
@@ -220,7 +440,7 @@ fdr_adj <- RadaFDR::adafdr_test(
 )
 ```
 
-```{r sex-vqtl}
+```{r sex-vqtl, eval=F}
 sex_sugg <- read_tsv("../data/processed/main_ffq_PC_gwis_res/sex_merged_sugg")
 
 subset_cmd <- paste("awk '$1 == 10 && $6 > 71090000 && $6 < 71200000'",
@@ -241,33 +461,4 @@ ggplot(a, aes(x=pos, y=negLogP)) +
   geom_point() + 
   facet_wrap(~source, ncol=1)
 ```
-
-
-```{r old, eval=F}
-# vqtl_enrich_df %>%
-#   ggplot(aes(x=P_Value_Interaction)) +
-#   geom_histogram(breaks=seq(0, 1, by=0.1)) +
-#   facet_wrap(vars(vqtl_bucket), scales="free") +
-#   labs(title="Enrichments according to vQTL")
-# 
-# vqtl_enrich_df %>%
-#   ggplot(aes(x=P_Value_Interaction)) +
-#   geom_histogram(breaks=seq(0, 1, by=0.1)) +
-#   facet_wrap(vars(marg_bucket), scales="free") +
-#   labs(title="Enrichments according to main effects")
-# 
-# vqtl_enrich_tbl <- table(vqtl_enrich_df$vqtl_bucket,
-#                          vqtl_enrich_df$int_bucket)
-# vqtl_cst <- chisq.test(vqtl_enrich_tbl)
-# print("vQTL Enrichment:")
-# vqtl_cst$observed / vqtl_cst$expected
-# vqtl_cst
-# 
-# marg_enrich_tbl <- table(vqtl_enrich_df$marg_bucket,
-#                          vqtl_enrich_df$int_bucket)
-# marg_cst <- chisq.test(marg_enrich_tbl)
-# print("Marginal Effects Enrichment:")
-# marg_cst$observed / marg_cst$expected
-# marg_cst
-```
-
+-->

@@ -31,7 +31,7 @@ singularity exec \
 	--pheno-name hba1c \
 	--pheno-type 0 \
 	--exposure-names ${EXP} \
-	--covar-names age age_squared cov_GENO_ARRAYUKBL PC1 PC2 PC3 PC4 PC5 PC6 PC7 PC8 PC9 PC10 \
+	--covar-names sex age age_squared cov_GENO_ARRAYUKBL PC1 PC2 PC3 PC4 PC5 PC6 PC7 PC8 PC9 PC10 \
 	--delim , \
 	--missing-value NA \
 	--robust 1 \

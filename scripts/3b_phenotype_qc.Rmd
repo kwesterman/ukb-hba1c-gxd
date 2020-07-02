@@ -44,8 +44,13 @@ do.call(plot_grid, top4_ffq_pc_plts)
 ggplot(raw_phenos, aes(x=sex)) +
   geom_bar()
 
+ggplot(phenos, aes(x=ffq_PC_ERS10)) +
+  geom_histogram() +
+  labs(x="Environmental risk score based on 10 FFQ-PCs")
+
 ggplot(phenos, aes(x=age)) +
-  geom_histogram()
+  geom_histogram() +
+  labs(x="Age")
 
 ggplot(raw_phenos, aes(x=fct_rev(assessment_centre))) +
   geom_bar() +
@@ -56,6 +61,20 @@ ggplot(raw_phenos, aes(x=fct_rev(birthplace))) +
   geom_bar() +
   coord_flip() +
   labs(x="Birthplace")
+
+ggplot(raw_phenos, aes(x=bmi)) +
+  geom_histogram() +
+  labs(x="BMI")
+
+ggplot(raw_phenos, aes(x=fct_rev(factor(smk_012)))) +
+  geom_bar() +
+  coord_flip() +
+  labs(x="Smoking (No=0, Previous=1, Current=2)")
+
+ggplot(raw_phenos, aes(x=fct_rev(factor(smk_yn)))) +
+  geom_bar() +
+  coord_flip() +
+  labs(x="Smoking (No=0, Yes=1)")
 ```
 
 ## Exposure and covariate associations with HbA1c
@@ -108,11 +127,16 @@ ggplot(inner_join(lm_df, self_report_eth, by="id"),
 #   theme(axis.text.x=element_text(angle=45))
 ```
 
-## Histograms for the full set of 39 FFQ-PCs
+## Histograms for the full set of 30 FFQ-PCs
+
+Notes:
+
+* 10 FFQ-PCs emerge with a lambda > 1
+* The ffq_PC_ERS10 is a weighted environmental risk score (or, equivalently, a measure of diet-predicted HbA1c based on the first 10 FFQ-PCs)
 
 ```{r all-ffq-pc-histograms}
-all_ffq_PCs <- grep("ffq_PC", names(phenos), value=T)
-ffq_pc_plts <- lapply(all_ffq_PCs, function(pc) {
+ffq_PCs_to_plot <- c(paste0("ffq_PC", 1:10), "ffq_PC_ERS10")
+ffq_pc_plts <- lapply(ffq_PCs_to_plot, function(pc) {
   ggplot(phenos, aes_string(x=pc)) +
     geom_histogram() +
     labs(title=gsub("ffq_PC_", "FFQ-PC ", pc), x="")

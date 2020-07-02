@@ -60,7 +60,6 @@ qplot(x=1:30,
        title="Scree plot for dPCs")
 ```
 
-
 ```{r loadings}
 kw_loadings <- kw_pca$rotation
 rownames(kw_loadings) <- strtrim(rownames(kw_loadings), 15)
